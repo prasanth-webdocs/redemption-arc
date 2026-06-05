@@ -1,0 +1,3652 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>REDEMPTION ARC — Personal OS</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;900&family=Rajdhani:wght@300;400;500;600;700&family=Share+Tech+Mono&display=swap"
+        rel="stylesheet" />
+    <style>
+        :root {
+            --neon-blue: #00d4ff;
+            --neon-purple: #a855f7;
+            --neon-gold: #f59e0b;
+            --neon-cyan: #06b6d4;
+            --neon-green: #10b981;
+            --neon-red: #ef4444;
+            --bg-dark: #030711;
+            --bg-card: rgba(10, 15, 30, 0.85);
+            --bg-card2: rgba(15, 20, 40, 0.7);
+            --border-glow: rgba(0, 212, 255, 0.3);
+            --text-primary: #e2e8f0;
+            --text-muted: #64748b;
+            --text-bright: #f8fafc;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html,
+        body {
+            height: 100%;
+            overflow: hidden;
+        }
+
+        body {
+            font-family: 'Rajdhani', sans-serif;
+            background: var(--bg-dark);
+            color: var(--text-primary);
+            overflow: hidden;
+        }
+
+        /* CANVAS BG */
+        #particles-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        /* SCANLINES */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0, 212, 255, 0.015) 2px, rgba(0, 212, 255, 0.015) 4px);
+            z-index: 1;
+            pointer-events: none;
+        }
+
+        /* MAIN LAYOUT */
+        #app {
+            position: relative;
+            z-index: 2;
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* SIDEBAR */
+        #sidebar {
+            width: 220px;
+            min-width: 220px;
+            background: rgba(5, 10, 25, 0.95);
+            border-right: 1px solid var(--border-glow);
+            display: flex;
+            flex-direction: column;
+            padding: 0;
+            overflow: hidden;
+            position: relative;
+        }
+
+        #sidebar::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 1px;
+            height: 100%;
+            background: linear-gradient(to bottom, transparent, var(--neon-blue), var(--neon-purple), transparent);
+        }
+
+        .sidebar-logo {
+            padding: 20px 16px 16px;
+            border-bottom: 1px solid rgba(0, 212, 255, 0.15);
+        }
+
+        .sidebar-logo .logo-text {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 11px;
+            font-weight: 900;
+            letter-spacing: 2px;
+            background: linear-gradient(90deg, var(--neon-blue), var(--neon-purple));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            line-height: 1.2;
+        }
+
+        .sidebar-logo .logo-sub {
+            font-size: 9px;
+            color: var(--text-muted);
+            letter-spacing: 3px;
+            margin-top: 2px;
+        }
+
+        .player-mini {
+            padding: 12px 16px;
+            border-bottom: 1px solid rgba(0, 212, 255, 0.1);
+        }
+
+        .rank-badge-mini {
+            display: inline-block;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 10px;
+            font-weight: 700;
+            padding: 2px 8px;
+            border-radius: 3px;
+            letter-spacing: 2px;
+            background: linear-gradient(90deg, rgba(168, 85, 247, 0.3), rgba(0, 212, 255, 0.3));
+            border: 1px solid rgba(168, 85, 247, 0.5);
+            color: var(--neon-purple);
+            margin-bottom: 6px;
+        }
+
+        .mini-xp-bar {
+            height: 3px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 2px;
+            margin-top: 4px;
+        }
+
+        .mini-xp-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--neon-blue), var(--neon-purple));
+            border-radius: 2px;
+            transition: width 0.5s ease;
+        }
+
+        .mini-stats {
+            display: flex;
+            gap: 12px;
+            margin-top: 6px;
+        }
+
+        .mini-stat {
+            font-size: 11px;
+            color: var(--text-muted);
+        }
+
+        .mini-stat span {
+            color: var(--neon-cyan);
+            font-weight: 600;
+        }
+
+        .nav-section {
+            padding: 8px 0;
+        }
+
+        .nav-label {
+            font-size: 9px;
+            letter-spacing: 3px;
+            color: var(--text-muted);
+            padding: 6px 16px 4px;
+            text-transform: uppercase;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 9px 16px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 500;
+            letter-spacing: 0.5px;
+            color: var(--text-muted);
+            transition: all 0.2s;
+            border-left: 2px solid transparent;
+            position: relative;
+        }
+
+        .nav-item:hover {
+            color: var(--neon-cyan);
+            background: rgba(0, 212, 255, 0.06);
+            border-left-color: rgba(0, 212, 255, 0.4);
+        }
+
+        .nav-item.active {
+            color: var(--neon-blue);
+            background: rgba(0, 212, 255, 0.1);
+            border-left-color: var(--neon-blue);
+        }
+
+        .nav-item .ni {
+            font-size: 15px;
+            width: 18px;
+            text-align: center;
+        }
+
+        .nav-item .badge {
+            margin-left: auto;
+            font-size: 9px;
+            padding: 1px 6px;
+            background: rgba(168, 85, 247, 0.3);
+            border: 1px solid rgba(168, 85, 247, 0.5);
+            border-radius: 10px;
+            color: var(--neon-purple);
+        }
+
+        /* MAIN CONTENT */
+        #main {
+            flex: 1;
+            overflow-y: auto;
+            overflow-x: hidden;
+            scroll-behavior: smooth;
+        }
+
+        #main::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        #main::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        #main::-webkit-scrollbar-thumb {
+            background: rgba(0, 212, 255, 0.3);
+            border-radius: 2px;
+        }
+
+        /* PAGES */
+        .page {
+            display: none;
+            min-height: 100vh;
+            padding: 24px;
+        }
+
+        .page.active {
+            display: block;
+        }
+
+        /* LANDING PAGE */
+        #page-landing {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 40px;
+            text-align: center;
+            background: radial-gradient(ellipse at center, rgba(0, 50, 80, 0.4) 0%, transparent 70%);
+        }
+
+        #page-landing.active {
+            display: flex;
+        }
+
+        .landing-eyebrow {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 11px;
+            letter-spacing: 5px;
+            color: var(--neon-cyan);
+            margin-bottom: 16px;
+            animation: fadeInDown 0.6s ease;
+        }
+
+        .landing-title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: clamp(36px, 6vw, 72px);
+            font-weight: 900;
+            line-height: 1;
+            letter-spacing: 4px;
+            background: linear-gradient(135deg, var(--neon-blue) 0%, var(--neon-purple) 50%, var(--neon-gold) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: fadeInDown 0.7s ease;
+            filter: drop-shadow(0 0 30px rgba(0, 212, 255, 0.3));
+        }
+
+        .landing-sub {
+            font-size: clamp(14px, 2vw, 18px);
+            color: var(--text-muted);
+            margin-top: 12px;
+            letter-spacing: 2px;
+            animation: fadeInUp 0.8s ease;
+            font-weight: 300;
+        }
+
+        .landing-stats {
+            display: flex;
+            gap: 32px;
+            margin: 32px 0;
+            flex-wrap: wrap;
+            justify-content: center;
+            animation: fadeIn 1s ease;
+        }
+
+        .ls-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-glow);
+            border-radius: 8px;
+            padding: 16px 24px;
+            min-width: 130px;
+            box-shadow: 0 0 20px rgba(0, 212, 255, 0.1);
+            backdrop-filter: blur(12px);
+        }
+
+        .ls-label {
+            font-size: 10px;
+            letter-spacing: 3px;
+            color: var(--text-muted);
+            font-family: 'Share Tech Mono', monospace;
+        }
+
+        .ls-value {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 22px;
+            font-weight: 700;
+            color: var(--neon-cyan);
+            margin-top: 4px;
+        }
+
+        .ls-value.gold {
+            color: var(--neon-gold);
+        }
+
+        .ls-value.purple {
+            color: var(--neon-purple);
+        }
+
+        .ls-value.green {
+            color: var(--neon-green);
+        }
+
+        .landing-xp-bar-wrap {
+            width: min(500px, 80vw);
+            margin: 0 auto 32px;
+        }
+
+        .landing-xp-label {
+            display: flex;
+            justify-content: space-between;
+            font-size: 11px;
+            color: var(--text-muted);
+            margin-bottom: 6px;
+            font-family: 'Share Tech Mono', monospace;
+        }
+
+        .landing-xp-bar {
+            height: 8px;
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 4px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .landing-xp-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--neon-blue), var(--neon-purple), var(--neon-gold));
+            border-radius: 4px;
+            transition: width 1.5s cubic-bezier(0.16, 1, 0.3, 1);
+            box-shadow: 0 0 12px var(--neon-blue);
+        }
+
+        .landing-xp-bar::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 50%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+            animation: shimmer 2s infinite;
+        }
+
+        .landing-btns {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            justify-content: center;
+            animation: fadeInUp 1.1s ease;
+        }
+
+        .btn-primary {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 11px;
+            letter-spacing: 2px;
+            font-weight: 700;
+            padding: 12px 24px;
+            border-radius: 4px;
+            cursor: pointer;
+            border: none;
+            background: linear-gradient(135deg, var(--neon-blue), var(--neon-purple));
+            color: white;
+            transition: all 0.3s;
+            box-shadow: 0 0 20px rgba(0, 212, 255, 0.3);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn-primary::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: 0.3s;
+        }
+
+        .btn-primary:hover::before {
+            left: 100%;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 0 30px rgba(0, 212, 255, 0.5);
+        }
+
+        .btn-secondary {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 11px;
+            letter-spacing: 2px;
+            font-weight: 600;
+            padding: 12px 24px;
+            border-radius: 4px;
+            cursor: pointer;
+            background: transparent;
+            color: var(--neon-cyan);
+            border: 1px solid rgba(0, 212, 255, 0.4);
+            transition: all 0.3s;
+        }
+
+        .btn-secondary:hover {
+            background: rgba(0, 212, 255, 0.1);
+            border-color: var(--neon-cyan);
+            transform: translateY(-2px);
+        }
+
+        /* CARDS */
+        .card {
+            background: var(--bg-card);
+            border: 1px solid rgba(0, 212, 255, 0.2);
+            border-radius: 10px;
+            padding: 20px;
+            backdrop-filter: blur(12px);
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+            transition: border-color 0.3s, box-shadow 0.3s;
+        }
+
+        .card:hover {
+            border-color: rgba(0, 212, 255, 0.4);
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.5), 0 0 20px rgba(0, 212, 255, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+        }
+
+        .card.gold-border {
+            border-color: rgba(245, 158, 11, 0.3);
+        }
+
+        .card.gold-border:hover {
+            border-color: rgba(245, 158, 11, 0.6);
+            box-shadow: 0 0 20px rgba(245, 158, 11, 0.1);
+        }
+
+        .card.purple-border {
+            border-color: rgba(168, 85, 247, 0.3);
+        }
+
+        .card-label {
+            font-size: 9px;
+            letter-spacing: 3px;
+            color: var(--text-muted);
+            font-family: 'Share Tech Mono', monospace;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+        }
+
+        .card-value {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 28px;
+            font-weight: 700;
+        }
+
+        .card-value.blue {
+            color: var(--neon-blue);
+        }
+
+        .card-value.gold {
+            color: var(--neon-gold);
+        }
+
+        .card-value.purple {
+            color: var(--neon-purple);
+        }
+
+        .card-value.green {
+            color: var(--neon-green);
+        }
+
+        .card-value.cyan {
+            color: var(--neon-cyan);
+        }
+
+        /* PAGE HEADER */
+        .page-header {
+            margin-bottom: 24px;
+        }
+
+        .page-title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 22px;
+            font-weight: 900;
+            letter-spacing: 3px;
+            background: linear-gradient(90deg, var(--neon-blue), var(--neon-purple));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .page-subtitle {
+            font-size: 12px;
+            color: var(--text-muted);
+            letter-spacing: 2px;
+            margin-top: 4px;
+        }
+
+        /* GRID LAYOUTS */
+        .grid-2 {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 16px;
+        }
+
+        .grid-3 {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+        }
+
+        .grid-4 {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+        }
+
+        .grid-auto {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+        }
+
+        /* XP BAR */
+        .xp-bar-wrap {
+            margin-top: 10px;
+        }
+
+        .xp-bar-labels {
+            display: flex;
+            justify-content: space-between;
+            font-size: 10px;
+            color: var(--text-muted);
+            margin-bottom: 4px;
+            font-family: 'Share Tech Mono', monospace;
+        }
+
+        .xp-bar {
+            height: 6px;
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 3px;
+            overflow: hidden;
+        }
+
+        .xp-bar-fill {
+            height: 100%;
+            border-radius: 3px;
+            transition: width 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .xp-bar-fill.blue {
+            background: linear-gradient(90deg, var(--neon-blue), var(--neon-cyan));
+            box-shadow: 0 0 8px var(--neon-blue);
+        }
+
+        .xp-bar-fill.purple {
+            background: linear-gradient(90deg, var(--neon-purple), #c084fc);
+            box-shadow: 0 0 8px var(--neon-purple);
+        }
+
+        .xp-bar-fill.gold {
+            background: linear-gradient(90deg, var(--neon-gold), #fcd34d);
+            box-shadow: 0 0 8px var(--neon-gold);
+        }
+
+        .xp-bar-fill.green {
+            background: linear-gradient(90deg, var(--neon-green), #34d399);
+            box-shadow: 0 0 8px var(--neon-green);
+        }
+
+        /* SKILL PROGRESS ROWS */
+        .skill-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 10px;
+        }
+
+        .skill-name {
+            font-size: 12px;
+            font-weight: 600;
+            letter-spacing: 1px;
+            min-width: 120px;
+            color: var(--text-primary);
+        }
+
+        .skill-bar-wrap {
+            flex: 1;
+            height: 5px;
+            background: rgba(255, 255, 255, 0.06);
+            border-radius: 3px;
+            overflow: hidden;
+        }
+
+        .skill-bar-fill {
+            height: 100%;
+            border-radius: 3px;
+            transition: width 1s ease;
+        }
+
+        .skill-pct {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 10px;
+            color: var(--text-muted);
+            min-width: 32px;
+            text-align: right;
+        }
+
+        /* QUEST ITEMS */
+        .quest-item {
+            background: var(--bg-card2);
+            border: 1px solid rgba(0, 212, 255, 0.15);
+            border-radius: 8px;
+            padding: 14px 16px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            transition: all 0.3s;
+            margin-bottom: 10px;
+            cursor: pointer;
+        }
+
+        .quest-item:hover {
+            border-color: rgba(0, 212, 255, 0.35);
+            background: rgba(10, 20, 40, 0.9);
+        }
+
+        .quest-item.completed {
+            opacity: 0.5;
+            border-color: rgba(16, 185, 129, 0.3);
+        }
+
+        .quest-item.completed .quest-title {
+            text-decoration: line-through;
+            color: var(--text-muted);
+        }
+
+        .quest-check {
+            width: 22px;
+            height: 22px;
+            border-radius: 4px;
+            border: 2px solid rgba(0, 212, 255, 0.4);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+
+        .quest-check.done {
+            background: var(--neon-green);
+            border-color: var(--neon-green);
+            color: white;
+            font-size: 12px;
+        }
+
+        .quest-info {
+            flex: 1;
+        }
+
+        .quest-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-bright);
+        }
+
+        .quest-desc {
+            font-size: 11px;
+            color: var(--text-muted);
+            margin-top: 2px;
+        }
+
+        .quest-meta {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 4px;
+        }
+
+        .quest-cat {
+            font-size: 9px;
+            letter-spacing: 2px;
+            padding: 2px 8px;
+            border-radius: 3px;
+            font-weight: 600;
+        }
+
+        .cat-physical {
+            background: rgba(239, 68, 68, 0.2);
+            color: #f87171;
+            border: 1px solid rgba(239, 68, 68, 0.3);
+        }
+
+        .cat-learning {
+            background: rgba(0, 212, 255, 0.15);
+            color: var(--neon-blue);
+            border: 1px solid rgba(0, 212, 255, 0.3);
+        }
+
+        .cat-communication {
+            background: rgba(168, 85, 247, 0.15);
+            color: var(--neon-purple);
+            border: 1px solid rgba(168, 85, 247, 0.3);
+        }
+
+        .cat-job {
+            background: rgba(245, 158, 11, 0.15);
+            color: var(--neon-gold);
+            border: 1px solid rgba(245, 158, 11, 0.3);
+        }
+
+        .cat-building {
+            background: rgba(16, 185, 129, 0.15);
+            color: var(--neon-green);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+        }
+
+        .quest-xp {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 11px;
+            color: var(--neon-gold);
+            font-weight: 700;
+            margin-left: auto;
+        }
+
+        /* BUTTONS */
+        .btn {
+            padding: 8px 16px;
+            border-radius: 4px;
+            border: none;
+            cursor: pointer;
+            font-family: 'Rajdhani', sans-serif;
+            font-weight: 600;
+            font-size: 13px;
+            letter-spacing: 0.5px;
+            transition: all 0.2s;
+        }
+
+        .btn-blue {
+            background: rgba(0, 212, 255, 0.15);
+            color: var(--neon-cyan);
+            border: 1px solid rgba(0, 212, 255, 0.4);
+        }
+
+        .btn-blue:hover {
+            background: rgba(0, 212, 255, 0.25);
+            box-shadow: 0 0 12px rgba(0, 212, 255, 0.3);
+        }
+
+        .btn-purple {
+            background: rgba(168, 85, 247, 0.15);
+            color: var(--neon-purple);
+            border: 1px solid rgba(168, 85, 247, 0.4);
+        }
+
+        .btn-purple:hover {
+            background: rgba(168, 85, 247, 0.25);
+        }
+
+        .btn-gold {
+            background: rgba(245, 158, 11, 0.15);
+            color: var(--neon-gold);
+            border: 1px solid rgba(245, 158, 11, 0.4);
+        }
+
+        .btn-gold:hover {
+            background: rgba(245, 158, 11, 0.25);
+        }
+
+        .btn-green {
+            background: rgba(16, 185, 129, 0.15);
+            color: var(--neon-green);
+            border: 1px solid rgba(16, 185, 129, 0.4);
+        }
+
+        .btn-green:hover {
+            background: rgba(16, 185, 129, 0.25);
+        }
+
+        .btn-red {
+            background: rgba(239, 68, 68, 0.15);
+            color: #f87171;
+            border: 1px solid rgba(239, 68, 68, 0.4);
+        }
+
+        .btn-red:hover {
+            background: rgba(239, 68, 68, 0.25);
+        }
+
+        .btn-sm {
+            padding: 5px 10px;
+            font-size: 11px;
+        }
+
+        /* MODAL */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(8px);
+            z-index: 1000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-overlay.open {
+            display: flex;
+        }
+
+        .modal {
+            background: rgba(8, 12, 28, 0.98);
+            border: 1px solid rgba(0, 212, 255, 0.3);
+            border-radius: 12px;
+            padding: 28px;
+            width: min(500px, 90vw);
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: 0 0 60px rgba(0, 212, 255, 0.15);
+            animation: modalIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .modal-title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--neon-cyan);
+            margin-bottom: 20px;
+            letter-spacing: 2px;
+        }
+
+        .modal-close {
+            float: right;
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            font-size: 18px;
+            margin-top: -4px;
+        }
+
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        .form-label {
+            font-size: 11px;
+            letter-spacing: 2px;
+            color: var(--text-muted);
+            margin-bottom: 6px;
+            display: block;
+            font-family: 'Share Tech Mono', monospace;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 10px 12px;
+            background: rgba(0, 212, 255, 0.05);
+            border: 1px solid rgba(0, 212, 255, 0.2);
+            border-radius: 6px;
+            color: var(--text-bright);
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 14px;
+            transition: border-color 0.2s;
+            outline: none;
+        }
+
+        .form-input:focus {
+            border-color: var(--neon-blue);
+            box-shadow: 0 0 12px rgba(0, 212, 255, 0.15);
+        }
+
+        .form-input option {
+            background: #0a0f1e;
+        }
+
+        .form-select {
+            width: 100%;
+            padding: 10px 12px;
+            background: rgba(0, 212, 255, 0.05);
+            border: 1px solid rgba(0, 212, 255, 0.2);
+            border-radius: 6px;
+            color: var(--text-bright);
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 14px;
+            outline: none;
+        }
+
+        .form-select:focus {
+            border-color: var(--neon-blue);
+        }
+
+        .form-select option {
+            background: #0a0f1e;
+        }
+
+        textarea.form-input {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        /* ACHIEVEMENT POPUP */
+        #achievement-popup {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 2000;
+            background: rgba(8, 12, 28, 0.98);
+            border: 1px solid var(--neon-gold);
+            border-radius: 10px;
+            padding: 16px 20px;
+            min-width: 280px;
+            box-shadow: 0 0 40px rgba(245, 158, 11, 0.3);
+            transform: translateX(400px);
+            transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        #achievement-popup.show {
+            transform: translateX(0);
+        }
+
+        .ach-title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 10px;
+            letter-spacing: 3px;
+            color: var(--neon-gold);
+            margin-bottom: 4px;
+        }
+
+        .ach-name {
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--text-bright);
+        }
+
+        .ach-desc {
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-top: 2px;
+        }
+
+        /* RANK POPUP */
+        #rank-popup {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0.5);
+            z-index: 3000;
+            opacity: 0;
+            pointer-events: none;
+            background: rgba(5, 8, 20, 0.98);
+            border: 2px solid var(--neon-gold);
+            border-radius: 16px;
+            padding: 40px 60px;
+            text-align: center;
+            box-shadow: 0 0 80px rgba(245, 158, 11, 0.4), 0 0 150px rgba(168, 85, 247, 0.2);
+            transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        #rank-popup.show {
+            opacity: 1;
+            transform: translate(-50%, -50%) scale(1);
+        }
+
+        .rank-popup-label {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 12px;
+            letter-spacing: 5px;
+            color: var(--neon-gold);
+        }
+
+        .rank-popup-title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 48px;
+            font-weight: 900;
+            background: linear-gradient(135deg, var(--neon-gold), #fcd34d, var(--neon-gold));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: pulse 0.5s ease infinite alternate;
+        }
+
+        .rank-popup-new {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 22px;
+            font-weight: 700;
+            color: var(--neon-purple);
+            margin-top: 8px;
+            letter-spacing: 4px;
+        }
+
+        /* SKILL TREE */
+        .skill-tree-svg {
+            width: 100%;
+            max-width: 900px;
+            margin: 0 auto;
+            display: block;
+        }
+
+        .skill-node {
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .skill-node:hover circle {
+            filter: brightness(1.3);
+        }
+
+        .node-locked circle {
+            fill: #1a1a2e;
+            stroke: rgba(100, 116, 139, 0.4);
+            stroke-width: 2;
+        }
+
+        .node-unlocked circle {
+            fill: rgba(0, 50, 80, 0.8);
+            stroke: var(--neon-blue);
+            stroke-width: 2;
+        }
+
+        .node-completed circle {
+            fill: rgba(0, 60, 40, 0.8);
+            stroke: var(--neon-green);
+            stroke-width: 2;
+        }
+
+        /* JOB TRACKING */
+        .job-card {
+            background: var(--bg-card2);
+            border: 1px solid rgba(0, 212, 255, 0.15);
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 10px;
+            display: grid;
+            grid-template-columns: 1fr auto;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .job-company {
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--text-bright);
+        }
+
+        .job-role {
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-top: 2px;
+        }
+
+        .job-date {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 10px;
+            color: var(--text-muted);
+        }
+
+        .status-badge {
+            padding: 4px 12px;
+            border-radius: 4px;
+            font-size: 10px;
+            font-weight: 700;
+            letter-spacing: 2px;
+            text-align: center;
+        }
+
+        .status-applied {
+            background: rgba(0, 212, 255, 0.15);
+            color: var(--neon-cyan);
+            border: 1px solid rgba(0, 212, 255, 0.3);
+        }
+
+        .status-assessment {
+            background: rgba(168, 85, 247, 0.15);
+            color: var(--neon-purple);
+            border: 1px solid rgba(168, 85, 247, 0.3);
+        }
+
+        .status-interview {
+            background: rgba(245, 158, 11, 0.15);
+            color: var(--neon-gold);
+            border: 1px solid rgba(245, 158, 11, 0.3);
+        }
+
+        .status-rejected {
+            background: rgba(239, 68, 68, 0.15);
+            color: #f87171;
+            border: 1px solid rgba(239, 68, 68, 0.3);
+        }
+
+        .status-selected {
+            background: rgba(16, 185, 129, 0.15);
+            color: var(--neon-green);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+        }
+
+        /* QUESTION CARDS */
+        .q-card {
+            background: var(--bg-card2);
+            border: 1px solid rgba(168, 85, 247, 0.2);
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .q-card:hover {
+            border-color: rgba(168, 85, 247, 0.4);
+            background: rgba(20, 15, 40, 0.9);
+        }
+
+        .q-text {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-bright);
+        }
+
+        .q-cat {
+            font-size: 9px;
+            letter-spacing: 2px;
+            color: var(--neon-purple);
+            margin-bottom: 6px;
+        }
+
+        .q-answer {
+            display: none;
+            margin-top: 12px;
+            padding-top: 12px;
+            border-top: 1px solid rgba(168, 85, 247, 0.2);
+            font-size: 13px;
+            color: var(--text-muted);
+            line-height: 1.6;
+        }
+
+        .q-card.open .q-answer {
+            display: block;
+        }
+
+        /* PROJECT CARDS */
+        .project-card {
+            background: var(--bg-card2);
+            border: 1px solid rgba(168, 85, 247, 0.2);
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 14px;
+        }
+
+        .project-name {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--neon-purple);
+            margin-bottom: 6px;
+        }
+
+        .project-desc {
+            font-size: 13px;
+            color: var(--text-muted);
+            margin-bottom: 12px;
+        }
+
+        .milestone {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 6px;
+            font-size: 13px;
+        }
+
+        .milestone-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+
+        .milestone-done .milestone-dot {
+            background: var(--neon-green);
+        }
+
+        .milestone-pending .milestone-dot {
+            background: rgba(100, 116, 139, 0.4);
+            border: 1px solid var(--text-muted);
+        }
+
+        /* MONEY */
+        .money-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid rgba(0, 212, 255, 0.08);
+        }
+
+        .money-label {
+            font-size: 14px;
+            color: var(--text-primary);
+        }
+
+        .money-amount {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 16px;
+            font-weight: 700;
+        }
+
+        .money-income {
+            color: var(--neon-green);
+        }
+
+        .money-expense {
+            color: #f87171;
+        }
+
+        /* ROADMAP */
+        .day-card {
+            background: var(--bg-card2);
+            border: 1px solid rgba(0, 212, 255, 0.1);
+            border-radius: 8px;
+            padding: 14px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .day-card:hover {
+            border-color: rgba(0, 212, 255, 0.3);
+        }
+
+        .day-card.completed-day {
+            border-color: rgba(16, 185, 129, 0.3);
+            background: rgba(16, 185, 129, 0.03);
+        }
+
+        .day-card.in-progress {
+            border-color: rgba(245, 158, 11, 0.3);
+        }
+
+        .day-num {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--text-muted);
+            margin-bottom: 6px;
+        }
+
+        .day-task {
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-top: 3px;
+            padding-left: 8px;
+            border-left: 2px solid rgba(0, 212, 255, 0.2);
+        }
+
+        .day-status {
+            font-size: 9px;
+            letter-spacing: 2px;
+            margin-top: 8px;
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 3px;
+        }
+
+        /* CONTENT TRACKER */
+        .content-card {
+            background: var(--bg-card2);
+            border: 1px solid rgba(245, 158, 11, 0.2);
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 10px;
+        }
+
+        /* LEADERBOARD */
+        .lb-card {
+            background: var(--bg-card2);
+            border: 1px solid rgba(0, 212, 255, 0.15);
+            border-radius: 10px;
+            padding: 20px 24px;
+        }
+
+        /* ANIMATIONS */
+        @keyframes fadeIn {
+            from {
+                opacity: 0
+            }
+
+            to {
+                opacity: 1
+            }
+        }
+
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-20px)
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0)
+            }
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px)
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0)
+            }
+        }
+
+        @keyframes modalIn {
+            from {
+                opacity: 0;
+                transform: scale(0.9)
+            }
+
+            to {
+                opacity: 1;
+                transform: scale(1)
+            }
+        }
+
+        @keyframes shimmer {
+            to {
+                left: 200%
+            }
+        }
+
+        @keyframes pulse {
+            from {
+                filter: brightness(1)
+            }
+
+            to {
+                filter: brightness(1.3)
+            }
+        }
+
+        @keyframes glow {
+
+            0%,
+            100% {
+                box-shadow: 0 0 5px var(--neon-blue)
+            }
+
+            50% {
+                box-shadow: 0 0 20px var(--neon-blue), 0 0 40px var(--neon-blue)
+            }
+        }
+
+        @keyframes float {
+
+            0%,
+            100% {
+                transform: translateY(0)
+            }
+
+            50% {
+                transform: translateY(-8px)
+            }
+        }
+
+        @keyframes xpRise {
+            from {
+                opacity: 1;
+                transform: translateY(0)
+            }
+
+            to {
+                opacity: 0;
+                transform: translateY(-60px)
+            }
+        }
+
+        /* QUOTE */
+        .quote-card {
+            background: linear-gradient(135deg, rgba(168, 85, 247, 0.1), rgba(0, 212, 255, 0.1));
+            border: 1px solid rgba(168, 85, 247, 0.3);
+            border-radius: 10px;
+            padding: 20px;
+            font-size: 15px;
+            font-style: italic;
+            color: var(--text-muted);
+            line-height: 1.6;
+        }
+
+        .quote-author {
+            font-size: 11px;
+            color: var(--neon-purple);
+            margin-top: 8px;
+            letter-spacing: 2px;
+            font-style: normal;
+        }
+
+        /* ACHIEVEMENT GRID */
+        .achievement-card {
+            background: var(--bg-card2);
+            border-radius: 8px;
+            padding: 16px;
+            text-align: center;
+            border: 1px solid rgba(0, 212, 255, 0.1);
+            transition: all 0.3s;
+        }
+
+        .achievement-card.unlocked {
+            border-color: rgba(245, 158, 11, 0.4);
+            background: rgba(245, 158, 11, 0.05);
+        }
+
+        .achievement-card.locked {
+            opacity: 0.4;
+            filter: grayscale(1);
+        }
+
+        .ach-icon {
+            font-size: 28px;
+            margin-bottom: 8px;
+        }
+
+        .ach-card-name {
+            font-size: 12px;
+            font-weight: 700;
+            color: var(--text-bright);
+            margin-bottom: 4px;
+        }
+
+        .ach-card-desc {
+            font-size: 10px;
+            color: var(--text-muted);
+        }
+
+        .ach-card-xp {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 10px;
+            color: var(--neon-gold);
+            margin-top: 6px;
+        }
+
+        /* TIMER */
+        .timer-display {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 48px;
+            font-weight: 900;
+            color: var(--neon-cyan);
+            text-align: center;
+            letter-spacing: 4px;
+            text-shadow: 0 0 20px var(--neon-cyan);
+        }
+
+        /* SCROLL HELPERS */
+        .scroll-area {
+            max-height: 60vh;
+            overflow-y: auto;
+            padding-right: 4px;
+        }
+
+        .scroll-area::-webkit-scrollbar {
+            width: 3px;
+        }
+
+        .scroll-area::-webkit-scrollbar-thumb {
+            background: rgba(0, 212, 255, 0.3);
+            border-radius: 2px;
+        }
+
+        /* DIVIDER */
+        .divider {
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(0, 212, 255, 0.2), transparent);
+            margin: 20px 0;
+        }
+
+        /* TABS */
+        .tabs {
+            display: flex;
+            gap: 4px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .tab {
+            padding: 7px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            letter-spacing: 1px;
+            font-weight: 600;
+            border: 1px solid rgba(0, 212, 255, 0.2);
+            color: var(--text-muted);
+            transition: all 0.2s;
+            background: rgba(0, 212, 255, 0.04);
+        }
+
+        .tab.active {
+            background: rgba(0, 212, 255, 0.15);
+            color: var(--neon-cyan);
+            border-color: rgba(0, 212, 255, 0.4);
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        /* TOP NAV */
+        #topnav {
+            background: rgba(3, 7, 17, 0.9);
+            border-bottom: 1px solid rgba(0, 212, 255, 0.15);
+            padding: 10px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            backdrop-filter: blur(12px);
+        }
+
+        .topnav-title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 13px;
+            font-weight: 700;
+            letter-spacing: 2px;
+            color: var(--neon-cyan);
+        }
+
+        .topnav-xp {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 11px;
+            color: var(--neon-gold);
+        }
+
+        /* HIDDEN SIDEBAR ON LANDING */
+        #sidebar.hidden-on-landing {
+            display: none;
+        }
+
+        /* CHART CONTAINER */
+        .chart-wrap {
+            position: relative;
+            height: 200px;
+        }
+
+        /* AI MENTOR */
+        .ai-msg {
+            padding: 14px 16px;
+            border-radius: 8px;
+            margin-bottom: 12px;
+            font-size: 14px;
+            line-height: 1.6;
+            animation: fadeIn 0.4s ease;
+        }
+
+        .ai-msg.user {
+            background: rgba(0, 212, 255, 0.08);
+            border: 1px solid rgba(0, 212, 255, 0.2);
+            color: var(--text-bright);
+        }
+
+        .ai-msg.bot {
+            background: rgba(168, 85, 247, 0.08);
+            border: 1px solid rgba(168, 85, 247, 0.2);
+            color: var(--text-muted);
+        }
+
+        .ai-label {
+            font-size: 9px;
+            letter-spacing: 3px;
+            margin-bottom: 6px;
+            font-family: 'Share Tech Mono', monospace;
+        }
+
+        .ai-label.user-l {
+            color: var(--neon-cyan);
+        }
+
+        .ai-label.bot-l {
+            color: var(--neon-purple);
+        }
+
+        /* COMM CHALLENGE */
+        .challenge-card {
+            background: linear-gradient(135deg, rgba(168, 85, 247, 0.1), rgba(0, 212, 255, 0.08));
+            border: 1px solid rgba(168, 85, 247, 0.3);
+            border-radius: 12px;
+            padding: 24px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .challenge-text {
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--text-bright);
+            line-height: 1.4;
+        }
+
+        .rating-stars {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            margin: 12px 0;
+        }
+
+        .star {
+            font-size: 24px;
+            cursor: pointer;
+            transition: transform 0.2s;
+            color: var(--text-muted);
+        }
+
+        .star.active {
+            color: var(--neon-gold);
+        }
+
+        .star:hover {
+            transform: scale(1.2);
+        }
+
+        @media(max-width:768px) {
+            #sidebar {
+                position: fixed;
+                left: -220px;
+                top: 0;
+                bottom: 0;
+                z-index: 500;
+                transition: left 0.3s;
+            }
+
+            #sidebar.mobile-open {
+                left: 0;
+            }
+
+            .grid-4 {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .grid-3 {
+                grid-template-columns: 1fr;
+            }
+
+            .grid-2 {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <canvas id="particles-canvas"></canvas>
+
+    <!-- Achievement Popup -->
+    <div id="achievement-popup">
+        <div class="ach-title">🏆 ACHIEVEMENT UNLOCKED</div>
+        <div class="ach-name" id="ach-popup-name">First Steps</div>
+        <div class="ach-desc" id="ach-popup-desc">You earned your first XP!</div>
+    </div>
+
+    <!-- Rank Up Popup -->
+    <div id="rank-popup">
+        <div class="rank-popup-label">RANK UP!</div>
+        <div class="rank-popup-title">⬆</div>
+        <div class="rank-popup-new" id="rank-popup-new">E RANK</div>
+        <div style="margin-top:12px;font-size:12px;color:var(--text-muted);font-family:'Share Tech Mono',monospace;">
+            POWER LEVEL INCREASED</div>
+    </div>
+
+    <div id="app">
+        <!-- SIDEBAR -->
+        <nav id="sidebar">
+            <div class="sidebar-logo">
+                <div class="logo-text">REDEMPTION<br>ARC</div>
+                <div class="logo-sub">PERSONAL OS v2.0</div>
+            </div>
+            <div class="player-mini">
+                <div class="rank-badge-mini" id="sb-rank">HUMAN</div>
+                <div style="font-size:12px;color:var(--text-muted);">LVL <span id="sb-level"
+                        style="color:var(--neon-cyan);font-weight:700;">1</span> · <span id="sb-xp"
+                        style="color:var(--neon-gold);font-family:'Share Tech Mono',monospace;font-size:11px;">0
+                        XP</span></div>
+                <div class="mini-xp-bar">
+                    <div class="mini-xp-fill" id="sb-xp-fill" style="width:0%"></div>
+                </div>
+                <div
+                    style="font-size:10px;color:var(--text-muted);margin-top:3px;font-family:'Share Tech Mono',monospace;">
+                    🔥 <span id="sb-streak">0</span> day streak</div>
+            </div>
+            <div style="overflow-y:auto;flex:1;">
+                <div class="nav-section">
+                    <div class="nav-label">Core</div>
+                    <div class="nav-item active" onclick="showPage('dashboard')"><span class="ni">⚡</span>Command Center
+                    </div>
+                    <div class="nav-item" onclick="showPage('quests')"><span class="ni">🎯</span>Daily Quests<span
+                            class="badge" id="quest-badge">0</span></div>
+                    <div class="nav-item" onclick="showPage('skills')"><span class="ni">🌳</span>Skill Tree</div>
+                    <div class="nav-item" onclick="showPage('roadmap')"><span class="ni">🗺️</span>75 Day Roadmap</div>
+                </div>
+                <div class="nav-section">
+                    <div class="nav-label">Career</div>
+                    <div class="nav-item" onclick="showPage('jobs')"><span class="ni">💼</span>Job Hunt</div>
+                    <div class="nav-item" onclick="showPage('interview')"><span class="ni">🎤</span>Interview Prep</div>
+                    <div class="nav-item" onclick="showPage('projects')"><span class="ni">🚀</span>Project Vault</div>
+                </div>
+                <div class="nav-section">
+                    <div class="nav-label">Growth</div>
+                    <div class="nav-item" onclick="showPage('money')"><span class="ni">💰</span>Money Tracker</div>
+                    <div class="nav-item" onclick="showPage('communication')"><span class="ni">🗣️</span>Comm Trainer
+                    </div>
+                    <div class="nav-item" onclick="showPage('content')"><span class="ni">📱</span>Content Hub</div>
+                </div>
+                <div class="nav-section">
+                    <div class="nav-label">Intel</div>
+                    <div class="nav-item" onclick="showPage('analytics')"><span class="ni">📊</span>Analytics</div>
+                    <div class="nav-item" onclick="showPage('achievements')"><span class="ni">🏆</span>Achievements
+                    </div>
+                    <div class="nav-item" onclick="showPage('leaderboard')"><span class="ni">📈</span>Leaderboard</div>
+                    <div class="nav-item" onclick="showPage('ai')"><span class="ni">🤖</span>AI Mentor</div>
+                </div>
+            </div>
+        </nav>
+
+        <!-- MAIN CONTENT -->
+        <div id="main">
+
+            <!-- LANDING PAGE -->
+            <div id="page-landing" class="page active">
+                <div class="landing-eyebrow">// INITIALIZING PERSONAL OS</div>
+                <div class="landing-title">REDEMPTION ARC</div>
+                <div class="landing-sub">Transform Yourself Into The Best Version Of You</div>
+                <div class="landing-stats">
+                    <div class="ls-card">
+                        <div class="ls-label">RANK</div>
+                        <div class="ls-value purple" id="land-rank">HUMAN</div>
+                    </div>
+                    <div class="ls-card">
+                        <div class="ls-label">LEVEL</div>
+                        <div class="ls-value blue" id="land-level">1</div>
+                    </div>
+                    <div class="ls-card">
+                        <div class="ls-label">TOTAL XP</div>
+                        <div class="ls-value gold" id="land-xp">0</div>
+                    </div>
+                    <div class="ls-card">
+                        <div class="ls-label">STREAK</div>
+                        <div class="ls-value green" id="land-streak">0 DAYS</div>
+                    </div>
+                </div>
+                <div class="landing-xp-bar-wrap">
+                    <div class="landing-xp-label">
+                        <span id="land-xp-cur">0 XP</span>
+                        <span id="land-xp-next">Next: 1000 XP</span>
+                    </div>
+                    <div class="landing-xp-bar">
+                        <div class="landing-xp-fill" id="land-xp-fill" style="width:0%"></div>
+                    </div>
+                </div>
+                <div class="landing-btns">
+                    <button class="btn-primary" onclick="showPage('dashboard')">⚡ CONTINUE JOURNEY</button>
+                    <button class="btn-secondary" onclick="showPage('quests')">🎯 DAILY QUEST</button>
+                    <button class="btn-secondary" onclick="showPage('skills')">🌳 SKILLS</button>
+                    <button class="btn-secondary" onclick="showPage('jobs')">💼 CAREER</button>
+                    <button class="btn-secondary" onclick="showPage('analytics')">📊 ANALYTICS</button>
+                </div>
+            </div>
+
+            <!-- DASHBOARD -->
+            <div id="page-dashboard" class="page">
+                <div id="topnav">
+                    <div class="topnav-title">⚡ COMMAND CENTER</div>
+                    <div class="topnav-xp" id="topnav-xp">0 XP · LVL 1</div>
+                </div>
+                <div style="padding:24px;">
+                    <div class="page-header">
+                        <div class="page-title">COMMAND CENTER</div>
+                        <div class="page-subtitle">YOUR PERSONAL OPERATING SYSTEM</div>
+                    </div>
+
+                    <div class="grid-4" style="margin-bottom:16px;">
+                        <div class="card gold-border">
+                            <div class="card-label">TOTAL XP</div>
+                            <div class="card-value gold" id="dash-xp">0</div>
+                            <div class="xp-bar-wrap">
+                                <div class="xp-bar-labels"><span id="dash-xp-cur">0</span><span
+                                        id="dash-xp-next">1000</span></div>
+                                <div class="xp-bar">
+                                    <div class="xp-bar-fill gold" id="dash-xp-bar" style="width:0%"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card purple-border">
+                            <div class="card-label">RANK · LEVEL</div>
+                            <div class="card-value purple" id="dash-rank">HUMAN</div>
+                            <div style="font-size:11px;color:var(--text-muted);margin-top:4px;">LVL <span
+                                    id="dash-level" style="color:var(--neon-cyan);font-weight:700;">1</span></div>
+                        </div>
+                        <div class="card">
+                            <div class="card-label">TODAY'S QUESTS</div>
+                            <div class="card-value blue" id="dash-quests-done">0<span
+                                    style="font-size:14px;color:var(--text-muted);" id="dash-quests-total">/0</span>
+                            </div>
+                            <div style="font-size:11px;color:var(--text-muted);margin-top:4px;">completed today</div>
+                        </div>
+                        <div class="card">
+                            <div class="card-label">🔥 STREAK</div>
+                            <div class="card-value green" id="dash-streak">0</div>
+                            <div style="font-size:11px;color:var(--text-muted);margin-top:4px;">days · longest: <span
+                                    id="dash-longest" style="color:var(--neon-cyan);">0</span></div>
+                        </div>
+                    </div>
+
+                    <div class="grid-2" style="margin-bottom:16px;">
+                        <div class="card">
+                            <div class="card-label">CAREER SKILLS PROGRESS</div>
+                            <div style="margin-top:12px;">
+                                <div class="skill-row"><span class="skill-name">Python</span>
+                                    <div class="skill-bar-wrap">
+                                        <div class="skill-bar-fill" id="d-py"
+                                            style="width:0%;background:linear-gradient(90deg,#3b82f6,#06b6d4)"></div>
+                                    </div><span class="skill-pct" id="d-py-p">0%</span>
+                                </div>
+                                <div class="skill-row"><span class="skill-name">Flutter / Dart</span>
+                                    <div class="skill-bar-wrap">
+                                        <div class="skill-bar-fill" id="d-fl"
+                                            style="width:0%;background:linear-gradient(90deg,#06b6d4,#22d3ee)"></div>
+                                    </div><span class="skill-pct" id="d-fl-p">0%</span>
+                                </div>
+                                <div class="skill-row"><span class="skill-name">DSA</span>
+                                    <div class="skill-bar-wrap">
+                                        <div class="skill-bar-fill" id="d-dsa"
+                                            style="width:0%;background:linear-gradient(90deg,#a855f7,#c084fc)"></div>
+                                    </div><span class="skill-pct" id="d-dsa-p">0%</span>
+                                </div>
+                                <div class="skill-row"><span class="skill-name">Communication</span>
+                                    <div class="skill-bar-wrap">
+                                        <div class="skill-bar-fill" id="d-comm"
+                                            style="width:0%;background:linear-gradient(90deg,#f59e0b,#fcd34d)"></div>
+                                    </div><span class="skill-pct" id="d-comm-p">0%</span>
+                                </div>
+                                <div class="skill-row"><span class="skill-name">Projects</span>
+                                    <div class="skill-bar-wrap">
+                                        <div class="skill-bar-fill" id="d-proj"
+                                            style="width:0%;background:linear-gradient(90deg,#10b981,#34d399)"></div>
+                                    </div><span class="skill-pct" id="d-proj-p">0%</span>
+                                </div>
+                                <div class="skill-row"><span class="skill-name">Interview Prep</span>
+                                    <div class="skill-bar-wrap">
+                                        <div class="skill-bar-fill" id="d-int"
+                                            style="width:0%;background:linear-gradient(90deg,#ef4444,#f87171)"></div>
+                                    </div><span class="skill-pct" id="d-int-p">0%</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div style="display:flex;flex-direction:column;gap:16px;">
+                            <div class="quote-card">
+                                <div
+                                    style="font-size:10px;letter-spacing:3px;color:var(--neon-purple);margin-bottom:8px;">
+                                    // DAILY INTEL</div>
+                                <div id="quote-text">"The only way to do great work is to love what you do."</div>
+                                <div class="quote-author" id="quote-author">— Steve Jobs</div>
+                            </div>
+                            <div class="card">
+                                <div class="card-label">ROADMAP PROGRESS</div>
+                                <div class="card-value cyan" id="dash-roadmap">0%</div>
+                                <div class="xp-bar-wrap">
+                                    <div class="xp-bar">
+                                        <div class="xp-bar-fill blue" id="dash-roadmap-bar" style="width:0%"></div>
+                                    </div>
+                                </div>
+                                <div style="font-size:11px;color:var(--text-muted);margin-top:6px;"><span
+                                        id="dash-road-done">0</span>/75 days completed</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-label">RECENT QUESTS — TODAY</div>
+                        <div id="dash-recent-quests" style="margin-top:12px;">
+                            <div style="color:var(--text-muted);font-size:13px;text-align:center;padding:20px;">No
+                                quests today. <span style="color:var(--neon-cyan);cursor:pointer;"
+                                    onclick="showPage('quests')">Add your first quest →</span></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- QUESTS PAGE -->
+            <div id="page-quests" class="page">
+                <div id="topnav2">
+                    <div
+                        style="background:rgba(3,7,17,0.9);border-bottom:1px solid rgba(0,212,255,0.15);padding:10px 24px;display:flex;align-items:center;justify-content:space-between;backdrop-filter:blur(12px);">
+                        <div class="topnav-title">🎯 DAILY QUESTS</div>
+                        <button class="btn btn-blue btn-sm" onclick="openQuestModal()">+ ADD QUEST</button>
+                    </div>
+                </div>
+                <div style="padding:24px;">
+                    <div class="page-header">
+                        <div class="page-title">DAILY QUESTS</div>
+                        <div class="page-subtitle">COMPLETE TASKS · EARN XP · LEVEL UP</div>
+                    </div>
+                    <div class="tabs" id="quest-tabs">
+                        <div class="tab active" onclick="filterQuests('all',this)">ALL</div>
+                        <div class="tab" onclick="filterQuests('PHYSICAL',this)">PHYSICAL</div>
+                        <div class="tab" onclick="filterQuests('LEARNING',this)">LEARNING</div>
+                        <div class="tab" onclick="filterQuests('COMMUNICATION',this)">COMM</div>
+                        <div class="tab" onclick="filterQuests('JOB',this)">JOB SEARCH</div>
+                        <div class="tab" onclick="filterQuests('BUILDING',this)">BUILDING</div>
+                    </div>
+                    <div id="quests-list"></div>
+                </div>
+            </div>
+
+            <!-- SKILLS PAGE -->
+            <div id="page-skills" class="page">
+                <div
+                    style="background:rgba(3,7,17,0.9);border-bottom:1px solid rgba(0,212,255,0.15);padding:10px 24px;backdrop-filter:blur(12px);">
+                    <div class="topnav-title">🌳 SKILL TREE</div>
+                </div>
+                <div style="padding:24px;">
+                    <div class="page-header">
+                        <div class="page-title">SKILL TREE</div>
+                        <div class="page-subtitle">RPG-STYLE PROGRESSION SYSTEM</div>
+                    </div>
+                    <div class="card" style="margin-bottom:20px;">
+                        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:16px;"
+                            id="skill-progress-grid"></div>
+                    </div>
+                    <div class="card">
+                        <div class="card-label">INTERACTIVE SKILL TREE</div>
+                        <div style="margin-top:16px;overflow-x:auto;">
+                            <svg class="skill-tree-svg" viewBox="0 0 900 500" id="skill-svg"></svg>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ROADMAP PAGE -->
+            <div id="page-roadmap" class="page">
+                <div
+                    style="background:rgba(3,7,17,0.9);border-bottom:1px solid rgba(0,212,255,0.15);padding:10px 24px;backdrop-filter:blur(12px);">
+                    <div class="topnav-title">🗺️ 75-DAY ROADMAP</div>
+                </div>
+                <div style="padding:24px;">
+                    <div class="page-header">
+                        <div class="page-title">75-DAY ROADMAP</div>
+                        <div class="page-subtitle">FROM HUMAN TO REDEEMED</div>
+                    </div>
+                    <div class="card" style="margin-bottom:20px;">
+                        <div class="card-label">OVERALL PROGRESS</div>
+                        <div style="display:flex;align-items:center;gap:16px;margin-top:8px;">
+                            <div class="card-value cyan" id="road-pct">0%</div>
+                            <div style="flex:1;">
+                                <div class="xp-bar" style="height:10px;">
+                                    <div class="xp-bar-fill blue" id="road-bar" style="width:0%"></div>
+                                </div>
+                            </div>
+                            <div
+                                style="font-size:12px;color:var(--text-muted);font-family:'Share Tech Mono',monospace;">
+                                <span id="road-done">0</span>/75</div>
+                        </div>
+                    </div>
+                    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px;"
+                        id="roadmap-grid"></div>
+                </div>
+            </div>
+
+            <!-- JOBS PAGE -->
+            <div id="page-jobs" class="page">
+                <div
+                    style="background:rgba(3,7,17,0.9);border-bottom:1px solid rgba(0,212,255,0.15);padding:10px 24px;display:flex;justify-content:space-between;align-items:center;backdrop-filter:blur(12px);">
+                    <div class="topnav-title">💼 JOB HUNT CENTER</div>
+                    <button class="btn btn-gold btn-sm" onclick="openJobModal()">+ ADD APPLICATION</button>
+                </div>
+                <div style="padding:24px;">
+                    <div class="page-header">
+                        <div class="page-title">JOB HUNT CENTER</div>
+                        <div class="page-subtitle">TRACK EVERY APPLICATION</div>
+                    </div>
+                    <div class="grid-4" style="margin-bottom:20px;">
+                        <div class="card">
+                            <div class="card-label">TOTAL APPLIED</div>
+                            <div class="card-value blue" id="job-total">0</div>
+                        </div>
+                        <div class="card">
+                            <div class="card-label">ASSESSMENTS</div>
+                            <div class="card-value purple" id="job-assess">0</div>
+                        </div>
+                        <div class="card">
+                            <div class="card-label">INTERVIEWS</div>
+                            <div class="card-value gold" id="job-inter">0</div>
+                        </div>
+                        <div class="card">
+                            <div class="card-label">SELECTED 🎉</div>
+                            <div class="card-value green" id="job-sel">0</div>
+                        </div>
+                    </div>
+                    <div class="card" style="margin-bottom:20px;">
+                        <div class="card-label">APPLICATION PIPELINE</div>
+                        <div class="chart-wrap" style="margin-top:12px;"><canvas id="job-chart"></canvas></div>
+                    </div>
+                    <div id="jobs-list"></div>
+                </div>
+            </div>
+
+            <!-- INTERVIEW PREP PAGE -->
+            <div id="page-interview" class="page">
+                <div
+                    style="background:rgba(3,7,17,0.9);border-bottom:1px solid rgba(0,212,255,0.15);padding:10px 24px;backdrop-filter:blur(12px);">
+                    <div class="topnav-title">🎤 INTERVIEW PREP HUB</div>
+                </div>
+                <div style="padding:24px;">
+                    <div class="page-header">
+                        <div class="page-title">INTERVIEW PREP HUB</div>
+                        <div class="page-subtitle">PRACTICE UNTIL IT'S PERFECT</div>
+                    </div>
+                    <div class="card"
+                        style="margin-bottom:20px;background:linear-gradient(135deg,rgba(168,85,247,0.1),rgba(0,212,255,0.08));">
+                        <div
+                            style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;">
+                            <div>
+                                <div class="card-label">MOCK INTERVIEW MODE</div>
+                                <div style="font-size:13px;color:var(--text-muted);margin-top:4px;">Random question +
+                                    countdown timer</div>
+                            </div>
+                            <button class="btn btn-purple" onclick="startMockInterview()">⚡ START MOCK</button>
+                        </div>
+                        <div id="mock-area" style="display:none;margin-top:20px;">
+                            <div class="timer-display" id="mock-timer">02:00</div>
+                            <div style="margin-top:12px;padding:16px;background:rgba(168,85,247,0.1);border:1px solid rgba(168,85,247,0.2);border-radius:8px;font-size:15px;font-weight:600;color:var(--text-bright);"
+                                id="mock-question">Loading...</div>
+                            <textarea class="form-input" style="margin-top:12px;" placeholder="Type your answer here..."
+                                rows="4" id="mock-answer"></textarea>
+                            <div style="display:flex;gap:8px;margin-top:12px;">
+                                <button class="btn btn-green btn-sm" onclick="nextMockQuestion()">NEXT QUESTION</button>
+                                <button class="btn btn-red btn-sm" onclick="stopMock()">STOP</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="tabs">
+                        <div class="tab active" onclick="filterQuestions('HR',this)">HR</div>
+                        <div class="tab" onclick="filterQuestions('PYTHON',this)">PYTHON</div>
+                        <div class="tab" onclick="filterQuestions('FLUTTER',this)">FLUTTER</div>
+                        <div class="tab" onclick="filterQuestions('DSA',this)">DSA</div>
+                        <div class="tab" onclick="filterQuestions('SQL',this)">SQL</div>
+                    </div>
+                    <div id="questions-list"></div>
+                </div>
+            </div>
+
+            <!-- PROJECTS PAGE -->
+            <div id="page-projects" class="page">
+                <div
+                    style="background:rgba(3,7,17,0.9);border-bottom:1px solid rgba(0,212,255,0.15);padding:10px 24px;display:flex;justify-content:space-between;align-items:center;backdrop-filter:blur(12px);">
+                    <div class="topnav-title">🚀 PROJECT VAULT</div>
+                    <button class="btn btn-purple btn-sm" onclick="openProjectModal()">+ ADD PROJECT</button>
+                </div>
+                <div style="padding:24px;">
+                    <div class="page-header">
+                        <div class="page-title">PROJECT VAULT</div>
+                        <div class="page-subtitle">BUILD. SHIP. REPEAT.</div>
+                    </div>
+                    <div id="projects-list"></div>
+                </div>
+            </div>
+
+            <!-- MONEY TRACKER -->
+            <div id="page-money" class="page">
+                <div
+                    style="background:rgba(3,7,17,0.9);border-bottom:1px solid rgba(0,212,255,0.15);padding:10px 24px;display:flex;justify-content:space-between;align-items:center;backdrop-filter:blur(12px);">
+                    <div class="topnav-title">💰 MONEY TRACKER</div>
+                    <button class="btn btn-green btn-sm" onclick="openMoneyModal()">+ ADD ENTRY</button>
+                </div>
+                <div style="padding:24px;">
+                    <div class="page-header">
+                        <div class="page-title">MONEY TRACKER</div>
+                        <div class="page-subtitle">FINANCIAL INTELLIGENCE HQ</div>
+                    </div>
+                    <div class="grid-3" style="margin-bottom:20px;">
+                        <div class="card">
+                            <div class="card-label">TOTAL INCOME</div>
+                            <div class="card-value green" id="money-income">₹0</div>
+                        </div>
+                        <div class="card">
+                            <div class="card-label">TOTAL EXPENSES</div>
+                            <div class="card-value" style="color:#f87171;" id="money-expense">₹0</div>
+                        </div>
+                        <div class="card gold-border">
+                            <div class="card-label">NET SAVINGS</div>
+                            <div class="card-value gold" id="money-savings">₹0</div>
+                        </div>
+                    </div>
+                    <div class="grid-2" style="margin-bottom:20px;">
+                        <div class="card">
+                            <div class="card-label">INCOME vs EXPENSE</div>
+                            <div class="chart-wrap"><canvas id="money-chart"></canvas></div>
+                        </div>
+                        <div class="card">
+                            <div class="card-label">BY CATEGORY</div>
+                            <div class="chart-wrap"><canvas id="money-pie-chart"></canvas></div>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <div class="card-label">TRANSACTIONS</div>
+                        <div id="money-list" style="margin-top:12px;"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- COMMUNICATION TRAINER -->
+            <div id="page-communication" class="page">
+                <div
+                    style="background:rgba(3,7,17,0.9);border-bottom:1px solid rgba(0,212,255,0.15);padding:10px 24px;backdrop-filter:blur(12px);">
+                    <div class="topnav-title">🗣️ COMMUNICATION TRAINER</div>
+                </div>
+                <div style="padding:24px;">
+                    <div class="page-header">
+                        <div class="page-title">COMMUNICATION TRAINER</div>
+                        <div class="page-subtitle">SPEAK WITH CONFIDENCE</div>
+                    </div>
+                    <div class="challenge-card" id="comm-challenge-card">
+                        <div class="card-label" style="margin-bottom:8px;">TODAY'S SPEAKING CHALLENGE</div>
+                        <div class="challenge-text" id="comm-challenge-text">Loading challenge...</div>
+                        <button class="btn btn-purple" style="margin-top:16px;" onclick="newChallenge()">🎲 NEW
+                            CHALLENGE</button>
+                    </div>
+                    <div class="card" style="margin-bottom:20px;">
+                        <div class="card-label">RATE YOUR PERFORMANCE</div>
+                        <div class="rating-stars" id="comm-stars">
+                            <span class="star" onclick="rateSpeech(1)">★</span>
+                            <span class="star" onclick="rateSpeech(2)">★</span>
+                            <span class="star" onclick="rateSpeech(3)">★</span>
+                            <span class="star" onclick="rateSpeech(4)">★</span>
+                            <span class="star" onclick="rateSpeech(5)">★</span>
+                        </div>
+                        <textarea class="form-input" id="comm-notes" placeholder="Notes about your practice..."
+                            rows="3"></textarea>
+                        <button class="btn btn-green" style="margin-top:12px;" onclick="saveCommPractice()">💾 SAVE
+                            PRACTICE</button>
+                    </div>
+                    <div class="card">
+                        <div class="card-label">PRACTICE HISTORY</div>
+                        <div id="comm-history" style="margin-top:12px;"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- CONTENT HUB -->
+            <div id="page-content" class="page">
+                <div
+                    style="background:rgba(3,7,17,0.9);border-bottom:1px solid rgba(0,212,255,0.15);padding:10px 24px;display:flex;justify-content:space-between;align-items:center;backdrop-filter:blur(12px);">
+                    <div class="topnav-title">📱 CONTENT CREATOR HUB</div>
+                    <button class="btn btn-gold btn-sm" onclick="openContentModal()">+ ADD CONTENT</button>
+                </div>
+                <div style="padding:24px;">
+                    <div class="page-header">
+                        <div class="page-title">CONTENT HUB</div>
+                        <div class="page-subtitle">CREATE. GROW. DOMINATE.</div>
+                    </div>
+                    <div class="grid-4" style="margin-bottom:20px;">
+                        <div class="card">
+                            <div class="card-label">INSTAGRAM POSTS</div>
+                            <div class="card-value blue" id="cnt-ig">0</div>
+                        </div>
+                        <div class="card">
+                            <div class="card-label">REELS</div>
+                            <div class="card-value purple" id="cnt-reels">0</div>
+                        </div>
+                        <div class="card">
+                            <div class="card-label">YT VIDEOS</div>
+                            <div class="card-value gold" id="cnt-yt">0</div>
+                        </div>
+                        <div class="card">
+                            <div class="card-label">FOLLOWERS</div>
+                            <div class="card-value green" id="cnt-followers">0</div>
+                        </div>
+                    </div>
+                    <div id="content-list" class="card">
+                        <div class="card-label">CONTENT LOG</div>
+                        <div style="margin-top:12px;" id="content-items"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ANALYTICS -->
+            <div id="page-analytics" class="page">
+                <div
+                    style="background:rgba(3,7,17,0.9);border-bottom:1px solid rgba(0,212,255,0.15);padding:10px 24px;backdrop-filter:blur(12px);">
+                    <div class="topnav-title">📊 ANALYTICS CENTER</div>
+                </div>
+                <div style="padding:24px;">
+                    <div class="page-header">
+                        <div class="page-title">ANALYTICS CENTER</div>
+                        <div class="page-subtitle">DATA-DRIVEN SELF IMPROVEMENT</div>
+                    </div>
+                    <div class="grid-2" style="margin-bottom:16px;">
+                        <div class="card">
+                            <div class="card-label">XP EARNED PER DAY (LAST 7)</div>
+                            <div class="chart-wrap" style="height:180px;"><canvas id="xp-chart"></canvas></div>
+                        </div>
+                        <div class="card">
+                            <div class="card-label">QUEST COMPLETION BY CATEGORY</div>
+                            <div class="chart-wrap" style="height:180px;"><canvas id="cat-chart"></canvas></div>
+                        </div>
+                    </div>
+                    <div class="grid-2">
+                        <div class="card">
+                            <div class="card-label">SKILL PROGRESS RADAR</div>
+                            <div class="chart-wrap" style="height:220px;"><canvas id="radar-chart"></canvas></div>
+                        </div>
+                        <div class="card">
+                            <div class="card-label">JOB APPLICATION FUNNEL</div>
+                            <div class="chart-wrap" style="height:220px;"><canvas id="funnel-chart"></canvas></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ACHIEVEMENTS -->
+            <div id="page-achievements" class="page">
+                <div
+                    style="background:rgba(3,7,17,0.9);border-bottom:1px solid rgba(0,212,255,0.15);padding:10px 24px;backdrop-filter:blur(12px);">
+                    <div class="topnav-title">🏆 ACHIEVEMENTS</div>
+                </div>
+                <div style="padding:24px;">
+                    <div class="page-header">
+                        <div class="page-title">ACHIEVEMENTS</div>
+                        <div class="page-subtitle" id="ach-unlocked-count">0/0 UNLOCKED</div>
+                    </div>
+                    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px;"
+                        id="achievements-grid"></div>
+                </div>
+            </div>
+
+            <!-- LEADERBOARD -->
+            <div id="page-leaderboard" class="page">
+                <div
+                    style="background:rgba(3,7,17,0.9);border-bottom:1px solid rgba(0,212,255,0.15);padding:10px 24px;backdrop-filter:blur(12px);">
+                    <div class="topnav-title">📈 LEADERBOARD</div>
+                </div>
+                <div style="padding:24px;">
+                    <div class="page-header">
+                        <div class="page-title">LEADERBOARD</div>
+                        <div class="page-subtitle">COMPETE AGAINST YOUR PAST SELF</div>
+                    </div>
+                    <div class="grid-2" style="margin-bottom:20px;">
+                        <div class="card gold-border">
+                            <div class="card-label">THIS MONTH</div>
+                            <div class="card-value purple" id="lb-cur-rank">HUMAN</div>
+                            <div style="font-family:'Orbitron',sans-serif;font-size:20px;color:var(--neon-gold);margin-top:4px;"
+                                id="lb-cur-xp">0 XP</div>
+                        </div>
+                        <div class="card">
+                            <div class="card-label">LAST MONTH</div>
+                            <div class="card-value"
+                                style="color:var(--text-muted);font-family:'Orbitron',sans-serif;font-size:22px;"
+                                id="lb-prev-rank">—</div>
+                            <div style="font-family:'Orbitron',sans-serif;font-size:20px;color:var(--text-muted);margin-top:4px;"
+                                id="lb-prev-xp">0 XP</div>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <div class="card-label">GROWTH</div>
+                        <div class="card-value green" id="lb-growth">+0%</div>
+                        <div style="font-size:12px;color:var(--text-muted);margin-top:6px;">XP gained this month vs last
+                            month</div>
+                    </div>
+                    <div class="card" style="margin-top:16px;">
+                        <div class="card-label">MONTHLY XP TREND</div>
+                        <div class="chart-wrap"><canvas id="monthly-chart"></canvas></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- AI MENTOR -->
+            <div id="page-ai" class="page">
+                <div
+                    style="background:rgba(3,7,17,0.9);border-bottom:1px solid rgba(0,212,255,0.15);padding:10px 24px;backdrop-filter:blur(12px);">
+                    <div class="topnav-title">🤖 AI MENTOR</div>
+                </div>
+                <div style="padding:24px;">
+                    <div class="page-header">
+                        <div class="page-title">AI MENTOR</div>
+                        <div class="page-subtitle">YOUR PERSONAL INTELLIGENCE ADVISOR</div>
+                    </div>
+                    <div class="card" style="margin-bottom:16px;">
+                        <div class="card-label">QUICK INTEL</div>
+                        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;">
+                            <button class="btn btn-blue btn-sm" onclick="aiQuery('today')">What to learn today?</button>
+                            <button class="btn btn-purple btn-sm" onclick="aiQuery('progress')">Analyze my
+                                progress</button>
+                            <button class="btn btn-gold btn-sm" onclick="aiQuery('interview')">Interview tips</button>
+                            <button class="btn btn-green btn-sm" onclick="aiQuery('jobs')">Job hunt strategy</button>
+                            <button class="btn btn-blue btn-sm" onclick="aiQuery('python')">Python roadmap</button>
+                        </div>
+                    </div>
+                    <div class="card" style="min-height:400px;">
+                        <div id="ai-chat"
+                            style="max-height:500px;overflow-y:auto;padding-right:4px;margin-bottom:16px;"></div>
+                        <div style="display:flex;gap:8px;">
+                            <input type="text" class="form-input" id="ai-input"
+                                placeholder="Ask your AI mentor anything..."
+                                onkeydown="if(event.key==='Enter')sendAiMsg()" />
+                            <button class="btn btn-purple" onclick="sendAiMsg()">SEND</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div><!-- end main -->
+    </div><!-- end app -->
+
+    <!-- MODALS -->
+    <div class="modal-overlay" id="quest-modal">
+        <div class="modal">
+            <div class="modal-title">⚡ ADD QUEST <button class="modal-close"
+                    onclick="closeModal('quest-modal')">✕</button></div>
+            <div class="form-group"><label class="form-label">QUEST TITLE</label><input class="form-input" id="q-title"
+                    placeholder="e.g. Python 2 Hours" /></div>
+            <div class="form-group"><label class="form-label">DESCRIPTION</label><textarea class="form-input"
+                    id="q-desc" placeholder="Details..."></textarea></div>
+            <div class="form-group"><label class="form-label">CATEGORY</label>
+                <select class="form-select" id="q-cat">
+                    <option value="PHYSICAL">PHYSICAL</option>
+                    <option value="LEARNING">LEARNING</option>
+                    <option value="COMMUNICATION">COMMUNICATION</option>
+                    <option value="JOB">JOB SEARCH</option>
+                    <option value="BUILDING">BUILDING</option>
+                </select>
+            </div>
+            <div class="form-group"><label class="form-label">XP REWARD</label><input type="number" class="form-input"
+                    id="q-xp" value="20" min="5" max="100" /></div>
+            <div style="display:flex;gap:8px;margin-top:20px;">
+                <button class="btn btn-blue" onclick="saveQuest()" style="flex:1;">SAVE QUEST</button>
+                <button class="btn btn-red btn-sm" onclick="closeModal('quest-modal')">CANCEL</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="job-modal">
+        <div class="modal">
+            <div class="modal-title">💼 ADD APPLICATION <button class="modal-close"
+                    onclick="closeModal('job-modal')">✕</button></div>
+            <div class="form-group"><label class="form-label">COMPANY</label><input class="form-input" id="j-company"
+                    placeholder="Company name" /></div>
+            <div class="form-group"><label class="form-label">ROLE</label><input class="form-input" id="j-role"
+                    placeholder="Software Engineer..." /></div>
+            <div class="form-group"><label class="form-label">DATE APPLIED</label><input type="date" class="form-input"
+                    id="j-date" /></div>
+            <div class="form-group"><label class="form-label">STATUS</label>
+                <select class="form-select" id="j-status">
+                    <option value="applied">APPLIED</option>
+                    <option value="assessment">ASSESSMENT</option>
+                    <option value="interview">INTERVIEW</option>
+                    <option value="rejected">REJECTED</option>
+                    <option value="selected">SELECTED</option>
+                </select>
+            </div>
+            <div class="form-group"><label class="form-label">NOTES</label><textarea class="form-input" id="j-notes"
+                    placeholder="Any notes..."></textarea></div>
+            <button class="btn btn-gold" onclick="saveJob()" style="width:100%;margin-top:12px;">SAVE
+                APPLICATION</button>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="project-modal">
+        <div class="modal">
+            <div class="modal-title">🚀 ADD PROJECT <button class="modal-close"
+                    onclick="closeModal('project-modal')">✕</button></div>
+            <div class="form-group"><label class="form-label">PROJECT NAME</label><input class="form-input" id="p-name"
+                    placeholder="e.g. Redemption OS" /></div>
+            <div class="form-group"><label class="form-label">DESCRIPTION</label><textarea class="form-input"
+                    id="p-desc" placeholder="What are you building?"></textarea></div>
+            <div class="form-group"><label class="form-label">PROGRESS (%)</label><input type="number"
+                    class="form-input" id="p-progress" value="0" min="0" max="100" /></div>
+            <button class="btn btn-purple" onclick="saveProject()" style="width:100%;margin-top:12px;">SAVE
+                PROJECT</button>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="money-modal">
+        <div class="modal">
+            <div class="modal-title">💰 ADD ENTRY <button class="modal-close"
+                    onclick="closeModal('money-modal')">✕</button></div>
+            <div class="form-group"><label class="form-label">TYPE</label>
+                <select class="form-select" id="m-type">
+                    <option value="income">INCOME</option>
+                    <option value="expense">EXPENSE</option>
+                </select>
+            </div>
+            <div class="form-group"><label class="form-label">CATEGORY</label>
+                <select class="form-select" id="m-cat">
+                    <option>Freelance</option>
+                    <option>YouTube</option>
+                    <option>Agency</option>
+                    <option>Salary</option>
+                    <option>Food</option>
+                    <option>Transport</option>
+                    <option>Education</option>
+                    <option>Other</option>
+                </select>
+            </div>
+            <div class="form-group"><label class="form-label">AMOUNT (₹)</label><input type="number" class="form-input"
+                    id="m-amount" placeholder="0" /></div>
+            <div class="form-group"><label class="form-label">NOTE</label><input class="form-input" id="m-note"
+                    placeholder="Brief description" /></div>
+            <button class="btn btn-green" onclick="saveMoney()" style="width:100%;margin-top:12px;">SAVE ENTRY</button>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="content-modal">
+        <div class="modal">
+            <div class="modal-title">📱 ADD CONTENT <button class="modal-close"
+                    onclick="closeModal('content-modal')">✕</button></div>
+            <div class="form-group"><label class="form-label">PLATFORM</label>
+                <select class="form-select" id="cnt-platform">
+                    <option>Instagram Post</option>
+                    <option>Reel</option>
+                    <option>YouTube Video</option>
+                    <option>Story</option>
+                </select>
+            </div>
+            <div class="form-group"><label class="form-label">TITLE</label><input class="form-input" id="cnt-title"
+                    placeholder="Content title/topic" /></div>
+            <div class="form-group"><label class="form-label">VIEWS/REACH</label><input type="number" class="form-input"
+                    id="cnt-views" placeholder="0" /></div>
+            <button class="btn btn-gold" onclick="saveContent()" style="width:100%;margin-top:12px;">LOG
+                CONTENT</button>
+        </div>
+    </div>
+
+    <script>
+        // ============================================================
+        // PARTICLES
+        // ============================================================
+        (function () {
+            const canvas = document.getElementById('particles-canvas');
+            const ctx = canvas.getContext('2d');
+            let particles = [];
+            let W, H;
+            function resize() { W = canvas.width = window.innerWidth; H = canvas.height = window.innerHeight; }
+            resize();
+            window.addEventListener('resize', resize);
+            class Particle {
+                constructor() { this.reset(); }
+                reset() {
+                    this.x = Math.random() * W;
+                    this.y = Math.random() * H;
+                    this.vx = (Math.random() - 0.5) * 0.4;
+                    this.vy = (Math.random() - 0.5) * 0.4;
+                    this.size = Math.random() * 1.5 + 0.3;
+                    this.alpha = Math.random() * 0.5 + 0.1;
+                    const colors = ['#00d4ff', '#a855f7', '#06b6d4', '#f59e0b'];
+                    this.color = colors[Math.floor(Math.random() * colors.length)];
+                }
+                update() {
+                    this.x += this.vx; this.y += this.vy;
+                    if (this.x < 0 || this.x > W || this.y < 0 || this.y > H) this.reset();
+                }
+                draw() {
+                    ctx.globalAlpha = this.alpha;
+                    ctx.fillStyle = this.color;
+                    ctx.beginPath();
+                    ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+            }
+            for (let i = 0; i < 120; i++) particles.push(new Particle());
+            function loop() {
+                ctx.clearRect(0, 0, W, H);
+                // Draw connections
+                ctx.lineWidth = 0.3;
+                for (let i = 0; i < particles.length; i++) {
+                    for (let j = i + 1; j < particles.length; j++) {
+                        const dx = particles[i].x - particles[j].x;
+                        const dy = particles[i].y - particles[j].y;
+                        const dist = Math.sqrt(dx * dx + dy * dy);
+                        if (dist < 100) {
+                            ctx.globalAlpha = 0.08 * (1 - dist / 100);
+                            ctx.strokeStyle = '#00d4ff';
+                            ctx.beginPath();
+                            ctx.moveTo(particles[i].x, particles[i].y);
+                            ctx.lineTo(particles[j].x, particles[j].y);
+                            ctx.stroke();
+                        }
+                    }
+                }
+                particles.forEach(p => { p.update(); p.draw(); });
+                requestAnimationFrame(loop);
+            }
+            loop();
+        })();
+
+        // ============================================================
+        // STATE & DATA
+        // ============================================================
+        const RANKS = [
+            { name: 'HUMAN', xp: 0 }, { name: 'E', xp: 1000 }, { name: 'D', xp: 2000 },
+            { name: 'C', xp: 3000 }, { name: 'B', xp: 4000 }, { name: 'A', xp: 6000 },
+            { name: 'S', xp: 8000 }, { name: 'SS', xp: 12000 }, { name: 'LEGEND', xp: 20000 }, { name: 'REDEEMED', xp: 50000 }
+        ];
+        const QUOTES = [
+            { text: '"The only way to do great work is to love what you do."', author: 'Steve Jobs' },
+            { text: '"It\'s not about being the best. It\'s about being better than you were yesterday."', author: 'Unknown' },
+            { text: '"Success is not final, failure is not fatal: It is the courage to continue that counts."', author: 'Winston Churchill' },
+            { text: '"Push yourself, because no one else is going to do it for you."', author: 'Unknown' },
+            { text: '"Great things never come from comfort zones."', author: 'Unknown' },
+            { text: '"Dream it. Wish it. Do it."', author: 'Unknown' },
+            { text: '"Stay hungry, stay foolish."', author: 'Steve Jobs' },
+            { text: '"The best time to plant a tree was 20 years ago. The second best time is now."', author: 'Chinese Proverb' },
+            { text: '"Code is like humor. When you have to explain it, it\'s bad."', author: 'Cory House' },
+            { text: '"First, solve the problem. Then, write the code."', author: 'John Johnson' },
+        ];
+        const COMM_CHALLENGES = [
+            "Why do you want to become a Software Engineer?",
+            "Describe yourself in 60 seconds.",
+            "Tell me about your favorite project — OnlyUs or Redemption OS.",
+            "What's your greatest strength as a developer?",
+            "Explain recursion to a 10-year-old.",
+            "How do you handle failure and setbacks?",
+            "Where do you see yourself in 5 years?",
+            "Describe your MCA journey and what you learned.",
+            "What makes you different from other candidates?",
+            "Talk about a time you learned something new quickly.",
+            "Explain object-oriented programming simply.",
+            "Why should we hire you over someone with more experience?",
+        ];
+        const QUESTIONS = {
+            HR: [
+                { q: "Tell me about yourself.", a: "Structure: 1. Educational background → 2. Technical skills → 3. Projects → 4. Why this role. Keep it under 2 minutes." },
+                { q: "What is your greatest weakness?", a: "Choose a real weakness, then show what you're doing to overcome it. e.g., 'I used to struggle with procrastination, but I now use a strict daily quest system.'" },
+                { q: "Why do you want to work with us?", a: "Research the company. Mention: their tech stack, culture, growth opportunities, and how your skills align." },
+                { q: "Where do you see yourself in 5 years?", a: "'In 5 years, I see myself as a senior software engineer, potentially leading a team, having shipped multiple impactful products.'" },
+                { q: "Describe a challenge you overcame.", a: "Use the STAR method: Situation, Task, Action, Result. Be specific." },
+            ],
+            PYTHON: [
+                { q: "What are Python decorators?", a: "Decorators are functions that modify the behavior of another function. They use the @decorator_name syntax. Commonly used for logging, authentication, and caching." },
+                { q: "Explain list comprehensions.", a: "[expr for item in iterable if condition] — a concise way to create lists. e.g., [x**2 for x in range(10) if x % 2 == 0]" },
+                { q: "What is the GIL in Python?", a: "Global Interpreter Lock — prevents multiple threads from executing Python bytecode simultaneously. Use multiprocessing to bypass it for CPU-bound tasks." },
+                { q: "What is a Python generator?", a: "Functions that yield values one at a time using yield. Memory efficient since they don't store all values in memory. Use iter() and next() to consume." },
+                { q: "Difference between deepcopy and copy?", a: "copy.copy() creates a shallow copy (references inner objects). copy.deepcopy() creates a fully independent copy including nested objects." },
+            ],
+            FLUTTER: [
+                { q: "What is the widget tree in Flutter?", a: "Flutter UI is built from widgets nested in a tree structure. Every component (text, button, layout) is a widget. The tree is rebuilt on setState()." },
+                { q: "StatefulWidget vs StatelessWidget?", a: "StatelessWidget: immutable, rebuilds only when parent changes. StatefulWidget: has internal state via State object, rebuilds on setState()." },
+                { q: "What is BuildContext?", a: "A handle to the location of a widget in the widget tree. Used to access Theme, Navigator, MediaQuery, and other inherited widgets." },
+                { q: "Explain Flutter's hot reload.", a: "Injects updated source code into running Dart VM. Preserves app state. Used for UI changes. Hot restart resets state but updates everything." },
+                { q: "What is Provider in Flutter?", a: "A state management solution. Makes data available down the widget tree without passing it through constructors. Works via InheritedWidget." },
+            ],
+            DSA: [
+                { q: "Explain Big O notation.", a: "Measures algorithm efficiency as input size grows. O(1)=constant, O(log n)=logarithmic, O(n)=linear, O(n²)=quadratic. Always aim for the lowest complexity." },
+                { q: "Stack vs Queue?", a: "Stack: LIFO (Last In First Out). Queue: FIFO (First In First Out). Stack uses push/pop, Queue uses enqueue/dequeue." },
+                { q: "What is dynamic programming?", a: "Breaking a problem into overlapping subproblems and caching their solutions (memoization/tabulation). Used in knapsack, LCS, coin change problems." },
+                { q: "Explain BFS vs DFS.", a: "BFS: level-by-level using a Queue. Good for shortest path. DFS: goes deep using Stack/recursion. Good for path existence, cycles, topological sort." },
+                { q: "What is a hash map?", a: "Key-value data structure with O(1) average lookup. Uses a hash function to map keys to buckets. Handles collisions via chaining or open addressing." },
+            ],
+            SQL: [
+                { q: "What is a JOIN? Types?", a: "Combines rows from tables. INNER JOIN (matching rows only), LEFT JOIN (all from left + matches), RIGHT JOIN, FULL OUTER JOIN (all rows)." },
+                { q: "What is normalization?", a: "Organizing data to reduce redundancy. 1NF: atomic columns. 2NF: no partial dependencies. 3NF: no transitive dependencies. Boyce-Codd is stricter." },
+                { q: "HAVING vs WHERE?", a: "WHERE filters rows before grouping. HAVING filters after GROUP BY. e.g., SELECT dept, COUNT(*) FROM emp GROUP BY dept HAVING COUNT(*) > 5." },
+                { q: "What are indexes?", a: "Data structures that speed up SELECT queries. B-tree index is default. Trade-off: faster reads, slower writes. Don't index every column." },
+                { q: "ACID properties?", a: "Atomicity (all-or-nothing), Consistency (valid state), Isolation (concurrent transactions don't interfere), Durability (committed data persists)." },
+            ],
+        };
+        const ALL_ACHIEVEMENTS = [
+            { id: 'first_xp', icon: '⚡', name: 'First Spark', desc: 'Earn your first XP', xp: 0, condition: s => s.totalXP >= 1 },
+            { id: 'xp_100', icon: '🌟', name: 'Century', desc: 'Reach 100 XP', xp: 100, condition: s => s.totalXP >= 100 },
+            { id: 'xp_1000', icon: '💎', name: 'Thousand Club', desc: 'Reach 1000 XP', xp: 1000, condition: s => s.totalXP >= 1000 },
+            { id: 'xp_5000', icon: '👑', name: 'Elite', desc: 'Reach 5000 XP', xp: 5000, condition: s => s.totalXP >= 5000 },
+            { id: 'streak_3', icon: '🔥', name: 'Consistent', desc: '3-day streak', xp: 0, condition: s => s.streak >= 3 },
+            { id: 'streak_7', icon: '🔥🔥', name: 'Week Warrior', desc: '7-day streak', xp: 0, condition: s => s.streak >= 7 },
+            { id: 'streak_30', icon: '💯', name: 'Unstoppable', desc: '30-day streak', xp: 0, condition: s => s.streak >= 30 },
+            { id: 'quest_first', icon: '🎯', name: 'Quest Begun', desc: 'Complete first quest', xp: 0, condition: s => s.totalQuestsCompleted >= 1 },
+            { id: 'quest_50', icon: '⚔️', name: 'Quest Master', desc: 'Complete 50 quests', xp: 0, condition: s => s.totalQuestsCompleted >= 50 },
+            { id: 'job_first', icon: '📝', name: 'Job Hunter', desc: 'First application', xp: 0, condition: s => s.jobs.length >= 1 },
+            { id: 'job_interview', icon: '🎤', name: 'Interview Ready', desc: 'Get an interview', xp: 0, condition: s => s.jobs.some(j => j.status === 'interview') },
+            { id: 'job_offer', icon: '🎉', name: 'SELECTED!', desc: 'Get selected for a job', xp: 0, condition: s => s.jobs.some(j => j.status === 'selected') },
+            { id: 'project_first', icon: '🚀', name: 'Builder', desc: 'Add first project', xp: 0, condition: s => s.projects.length >= 1 },
+            { id: 'money_10k', icon: '💰', name: '₹10K Earned', desc: 'Earn ₹10,000 total', xp: 0, condition: s => s.money.filter(m => m.type === 'income').reduce((a, m) => a + m.amount, 0) >= 10000 },
+            { id: 'rank_e', icon: '⬆️', name: 'Rising', desc: 'Reach E Rank', xp: 0, condition: s => s.totalXP >= 1000 },
+            { id: 'rank_s', icon: '🌠', name: 'S-Class', desc: 'Reach S Rank', xp: 0, condition: s => s.totalXP >= 8000 },
+        ];
+
+        // Default state
+        function defaultState() {
+            return {
+                totalXP: 0,
+                level: 1,
+                rank: 'HUMAN',
+                streak: 0,
+                longestStreak: 0,
+                lastActiveDate: null,
+                quests: [],
+                jobs: [],
+                projects: [
+                    { id: 1, name: 'OnlyUs', desc: 'A social connection platform — building meaningful relationships.', progress: 35, milestones: ['Concept & Design', 'Backend API', 'Frontend UI', 'Beta Testing', 'Launch'], milestoneDone: [true, false, false, false, false] },
+                    { id: 2, name: 'Redemption OS', desc: 'This very productivity system — your personal operating system.', progress: 80, milestones: ['System Design', 'Core Features', 'UI Polish', 'LocalStorage', 'Deploy'], milestoneDone: [true, true, true, true, false] },
+                ],
+                money: [],
+                content: [],
+                commHistory: [],
+                roadmapStatus: Array(75).fill('not-started'),
+                skills: { python: 0, flutter: 0, dsa: 0, communication: 0, projects: 0, interview: 0 },
+                skillNodes: {},
+                xpHistory: Array(7).fill(0),
+                totalQuestsCompleted: 0,
+                unlockedAchievements: [],
+                monthlyXP: { current: 0, previous: 0, currentRank: 'HUMAN', prevRank: 'HUMAN' },
+                currentChallenge: COMM_CHALLENGES[0],
+                currentChallengeRating: 0,
+                aiMessages: [],
+            };
+        }
+
+        let STATE = JSON.parse(localStorage.getItem('redemption_state') || 'null') || defaultState();
+        // Fill missing keys
+        const def = defaultState();
+        for (const k in def) { if (STATE[k] === undefined) STATE[k] = def[k]; }
+
+        function save() { localStorage.setItem('redemption_state', JSON.stringify(STATE)); }
+
+        // ============================================================
+        // XP & RANK
+        // ============================================================
+        function getRankInfo(xp) {
+            let rank = RANKS[0];
+            let nextRank = RANKS[1];
+            for (let i = 0; i < RANKS.length; i++) {
+                if (xp >= RANKS[i].xp) { rank = RANKS[i]; nextRank = RANKS[i + 1] || RANKS[i]; }
+            }
+            const level = Math.max(1, Math.floor(xp / 200) + 1);
+            const curRankXP = rank.xp;
+            const nextRankXP = nextRank ? nextRank.xp : rank.xp;
+            const pct = nextRankXP > curRankXP ? Math.min(100, ((xp - curRankXP) / (nextRankXP - curRankXP)) * 100) : 100;
+            return { rank: rank.name, level, nextRankXP, pct, nextRankName: nextRank ? nextRank.name : rank.name };
+        }
+
+        function addXP(amount, label) {
+            const oldRank = STATE.rank;
+            STATE.totalXP += amount;
+            STATE.monthlyXP.current = (STATE.monthlyXP.current || 0) + amount;
+            // Update XP history
+            STATE.xpHistory = STATE.xpHistory || Array(7).fill(0);
+            STATE.xpHistory[STATE.xpHistory.length - 1] = (STATE.xpHistory[STATE.xpHistory.length - 1] || 0) + amount;
+
+            const info = getRankInfo(STATE.totalXP);
+            STATE.rank = info.rank;
+            STATE.level = info.level;
+            STATE.monthlyXP.currentRank = info.rank;
+            save();
+            updateAllUI();
+
+            // XP rise animation
+            const el = document.createElement('div');
+            el.style.cssText = `position:fixed;top:50%;right:24px;font-family:'Orbitron',sans-serif;font-size:18px;font-weight:700;color:#f59e0b;z-index:5000;pointer-events:none;animation:xpRise 1.5s ease forwards;text-shadow:0 0 10px rgba(245,158,11,0.8);`;
+            el.textContent = `+${amount} XP`;
+            document.body.appendChild(el);
+            setTimeout(() => el.remove(), 1600);
+
+            if (STATE.rank !== oldRank) showRankUp(STATE.rank);
+            checkAchievements();
+        }
+
+        function updateStreak() {
+            const today = new Date().toDateString();
+            const last = STATE.lastActiveDate;
+            if (last === today) return;
+            const yesterday = new Date(Date.now() - 86400000).toDateString();
+            if (last === yesterday) {
+                STATE.streak++;
+            } else if (last !== today) {
+                STATE.streak = 1;
+            }
+            STATE.longestStreak = Math.max(STATE.longestStreak, STATE.streak);
+            STATE.lastActiveDate = today;
+            // Shift XP history
+            if (last !== today) {
+                STATE.xpHistory.shift();
+                STATE.xpHistory.push(0);
+            }
+            save();
+        }
+
+        // ============================================================
+        // UI UPDATES
+        // ============================================================
+        function updateAllUI() {
+            const info = getRankInfo(STATE.totalXP);
+            // Sidebar
+            document.getElementById('sb-rank').textContent = info.rank;
+            document.getElementById('sb-level').textContent = info.level;
+            document.getElementById('sb-xp').textContent = STATE.totalXP + ' XP';
+            document.getElementById('sb-xp-fill').style.width = info.pct + '%';
+            document.getElementById('sb-streak').textContent = STATE.streak;
+            // Top nav
+            const tn = document.getElementById('topnav-xp');
+            if (tn) tn.textContent = `${STATE.totalXP} XP · LVL ${info.level}`;
+            // Landing
+            document.getElementById('land-rank').textContent = info.rank;
+            document.getElementById('land-level').textContent = info.level;
+            document.getElementById('land-xp').textContent = STATE.totalXP;
+            document.getElementById('land-streak').textContent = STATE.streak + ' DAYS';
+            document.getElementById('land-xp-cur').textContent = STATE.totalXP + ' XP';
+            document.getElementById('land-xp-next').textContent = 'Next: ' + info.nextRankXP + ' XP';
+            setTimeout(() => document.getElementById('land-xp-fill').style.width = info.pct + '%', 100);
+            // Dashboard
+            document.getElementById('dash-xp').textContent = STATE.totalXP;
+            document.getElementById('dash-xp-cur').textContent = STATE.totalXP;
+            document.getElementById('dash-xp-next').textContent = info.nextRankXP;
+            document.getElementById('dash-xp-bar').style.width = info.pct + '%';
+            document.getElementById('dash-rank').textContent = info.rank;
+            document.getElementById('dash-level').textContent = info.level;
+            document.getElementById('dash-streak').textContent = STATE.streak;
+            document.getElementById('dash-longest').textContent = STATE.longestStreak;
+            // Quest counts
+            const todayQ = (STATE.quests || []).filter(q => q.date === new Date().toDateString());
+            const doneQ = todayQ.filter(q => q.done);
+            document.getElementById('dash-quests-done').textContent = doneQ.length;
+            document.getElementById('dash-quests-total').textContent = '/' + todayQ.length;
+            const questBadge = document.getElementById('quest-badge');
+            questBadge.textContent = todayQ.filter(q => !q.done).length;
+            // Skills
+            const sk = STATE.skills || {};
+            setSkillUI('d-py', 'd-py-p', sk.python || 0);
+            setSkillUI('d-fl', 'd-fl-p', sk.flutter || 0);
+            setSkillUI('d-dsa', 'd-dsa-p', sk.dsa || 0);
+            setSkillUI('d-comm', 'd-comm-p', sk.communication || 0);
+            setSkillUI('d-proj', 'd-proj-p', sk.projects || 0);
+            setSkillUI('d-int', 'd-int-p', sk.interview || 0);
+            // Roadmap
+            const doneDays = (STATE.roadmapStatus || []).filter(s => s === 'completed').length;
+            const roadPct = Math.round((doneDays / 75) * 100);
+            document.getElementById('dash-roadmap').textContent = roadPct + '%';
+            document.getElementById('dash-roadmap-bar').style.width = roadPct + '%';
+            document.getElementById('dash-road-done').textContent = doneDays;
+            // Recent quests on dashboard
+            const recentEl = document.getElementById('dash-recent-quests');
+            if (recentEl) {
+                if (todayQ.length === 0) {
+                    recentEl.innerHTML = '<div style="color:var(--text-muted);font-size:13px;text-align:center;padding:20px;">No quests today. <span style="color:var(--neon-cyan);cursor:pointer;" onclick="showPage(\'quests\')">Add your first quest →</span></div>';
+                } else {
+                    recentEl.innerHTML = todayQ.slice(0, 4).map(q => `
+        <div class="quest-item ${q.done ? 'completed' : ''}">
+          <div class="quest-check ${q.done ? 'done' : ''}">${q.done ? '✓' : ''}</div>
+          <div class="quest-info"><div class="quest-title">${q.title}</div></div>
+          <div class="quest-xp">+${q.xp} XP</div>
+        </div>`).join('');
+                }
+            }
+            // Quote rotation
+            const qi = Math.floor(Date.now() / 3600000) % QUOTES.length;
+            const qt = document.getElementById('quote-text');
+            const qa = document.getElementById('quote-author');
+            if (qt) qt.textContent = QUOTES[qi].text;
+            if (qa) qa.textContent = QUOTES[qi].author;
+        }
+
+        function setSkillUI(barId, pctId, val) {
+            const bar = document.getElementById(barId);
+            const pct = document.getElementById(pctId);
+            if (bar) setTimeout(() => bar.style.width = val + '%', 100);
+            if (pct) pct.textContent = val + '%';
+        }
+
+        // ============================================================
+        // PAGE NAVIGATION
+        // ============================================================
+        let currentPage = 'landing';
+        function showPage(page) {
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+            const el = document.getElementById('page-' + page);
+            if (el) el.classList.add('active');
+            document.querySelectorAll('.nav-item').forEach(n => {
+                if (n.getAttribute('onclick') && n.getAttribute('onclick').includes(`'${page}'`)) n.classList.add('active');
+            });
+            currentPage = page;
+            // Show/hide sidebar
+            if (page === 'landing') {
+                document.getElementById('sidebar').style.display = 'none';
+            } else {
+                document.getElementById('sidebar').style.display = 'flex';
+            }
+            // Render page content
+            if (page === 'quests') renderQuests();
+            if (page === 'skills') renderSkillTree();
+            if (page === 'roadmap') renderRoadmap();
+            if (page === 'jobs') { renderJobs(); renderJobChart(); }
+            if (page === 'interview') renderQuestions('HR');
+            if (page === 'projects') renderProjects();
+            if (page === 'money') { renderMoney(); renderMoneyCharts(); }
+            if (page === 'communication') renderCommHistory();
+            if (page === 'content') renderContent();
+            if (page === 'analytics') setTimeout(renderAnalytics, 100);
+            if (page === 'achievements') renderAchievements();
+            if (page === 'leaderboard') renderLeaderboard();
+            if (page === 'ai') renderAI();
+            updateAllUI();
+        }
+
+        // Init sidebar hidden on landing
+        document.getElementById('sidebar').style.display = 'none';
+
+        // ============================================================
+        // QUESTS
+        // ============================================================
+        let questFilter = 'all';
+        function openQuestModal(editId) {
+            document.getElementById('q-title').value = '';
+            document.getElementById('q-desc').value = '';
+            document.getElementById('q-xp').value = 20;
+            document.getElementById('quest-modal').classList.add('open');
+        }
+        function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+        function saveQuest() {
+            const title = document.getElementById('q-title').value.trim();
+            if (!title) return;
+            const quest = {
+                id: Date.now(),
+                title,
+                desc: document.getElementById('q-desc').value,
+                category: document.getElementById('q-cat').value,
+                xp: parseInt(document.getElementById('q-xp').value) || 20,
+                done: false,
+                date: new Date().toDateString(),
+            };
+            STATE.quests.push(quest);
+            save();
+            closeModal('quest-modal');
+            renderQuests();
+            updateAllUI();
+        }
+        function filterQuests(cat, el) {
+            questFilter = cat;
+            document.querySelectorAll('#quest-tabs .tab').forEach(t => t.classList.remove('active'));
+            if (el) el.classList.add('active');
+            renderQuests();
+        }
+        function renderQuests() {
+            const container = document.getElementById('quests-list');
+            if (!container) return;
+            let quests = STATE.quests || [];
+            const todayStr = new Date().toDateString();
+            quests = quests.filter(q => q.date === todayStr || !q.date);
+            if (questFilter !== 'all') quests = quests.filter(q => q.category === questFilter);
+            if (quests.length === 0) {
+                container.innerHTML = `<div style="text-align:center;padding:40px;color:var(--text-muted);">
+      <div style="font-size:32px;margin-bottom:12px;">🎯</div>
+      <div style="font-size:14px;">No quests found. Add your daily quests!</div>
+    </div>`;
+                return;
+            }
+            container.innerHTML = quests.map(q => `
+    <div class="quest-item ${q.done ? 'completed' : ''}" id="qi-${q.id}">
+      <div class="quest-check ${q.done ? 'done' : ''}" onclick="toggleQuest(${q.id})">${q.done ? '✓' : ''}</div>
+      <div class="quest-info">
+        <div class="quest-title">${q.title}</div>
+        ${q.desc ? `<div class="quest-desc">${q.desc}</div>` : ''}
+        <div class="quest-meta">
+          <span class="quest-cat cat-${q.category.toLowerCase()}">${q.category}</span>
+        </div>
+      </div>
+      <div class="quest-xp">+${q.xp} XP</div>
+      <button class="btn btn-red btn-sm" style="margin-left:8px;" onclick="deleteQuest(${q.id})">✕</button>
+    </div>`).join('');
+        }
+        function toggleQuest(id) {
+            updateStreak();
+            const q = STATE.quests.find(q => q.id === id);
+            if (!q || q.done) return;
+            q.done = true;
+            STATE.totalQuestsCompleted = (STATE.totalQuestsCompleted || 0) + 1;
+            // Update skills based on category
+            if (q.category === 'LEARNING') { STATE.skills.python = Math.min(100, (STATE.skills.python || 0) + 2); STATE.skills.dsa = Math.min(100, (STATE.skills.dsa || 0) + 1); }
+            if (q.category === 'COMMUNICATION') STATE.skills.communication = Math.min(100, (STATE.skills.communication || 0) + 3);
+            if (q.category === 'BUILDING') { STATE.skills.projects = Math.min(100, (STATE.skills.projects || 0) + 2); STATE.skills.flutter = Math.min(100, (STATE.skills.flutter || 0) + 1); }
+            if (q.category === 'JOB') STATE.skills.interview = Math.min(100, (STATE.skills.interview || 0) + 2);
+            save();
+            addXP(q.xp, q.title);
+            renderQuests();
+        }
+        function deleteQuest(id) {
+            STATE.quests = STATE.quests.filter(q => q.id !== id);
+            save();
+            renderQuests();
+            updateAllUI();
+        }
+        // Default quests
+        function addDefaultQuests() {
+            if (STATE.quests.length > 0) return;
+            const today = new Date().toDateString();
+            const defaults = [
+                { title: 'Walk 5000 Steps', desc: 'Daily physical activity', category: 'PHYSICAL', xp: 20 },
+                { title: 'Gym 30 Minutes', desc: 'Build strength and endurance', category: 'PHYSICAL', xp: 20 },
+                { title: 'Python 2 Hours', desc: 'Practice Python programming', category: 'LEARNING', xp: 30 },
+                { title: 'English Practice', desc: 'Communication improvement', category: 'COMMUNICATION', xp: 20 },
+                { title: 'Apply To 5 Jobs', desc: 'Keep the pipeline active', category: 'JOB', xp: 30 },
+                { title: 'Code For 1 Hour', desc: 'Build your project or practice', category: 'BUILDING', xp: 30 },
+            ];
+            defaults.forEach(d => STATE.quests.push({ id: Date.now() + Math.random(), date: today, done: false, ...d }));
+            save();
+        }
+        addDefaultQuests();
+
+        // ============================================================
+        // SKILL TREE
+        // ============================================================
+        function renderSkillTree() {
+            // Progress grid
+            const grid = document.getElementById('skill-progress-grid');
+            if (!grid) return;
+            const skills = [
+                { name: 'Python', key: 'python', color: '#3b82f6' },
+                { name: 'Flutter', key: 'flutter', color: '#06b6d4' },
+                { name: 'DSA', key: 'dsa', color: '#a855f7' },
+                { name: 'Communication', key: 'communication', color: '#f59e0b' },
+                { name: 'Projects', key: 'projects', color: '#10b981' },
+                { name: 'Interview', key: 'interview', color: '#ef4444' },
+            ];
+            grid.innerHTML = skills.map(s => {
+                const v = STATE.skills[s.key] || 0;
+                return `<div style="text-align:center;">
+      <div style="font-size:11px;color:var(--text-muted);letter-spacing:1px;margin-bottom:6px;">${s.name}</div>
+      <div style="font-family:'Orbitron',sans-serif;font-size:22px;font-weight:700;color:${s.color};">${v}%</div>
+      <div class="xp-bar" style="height:4px;margin-top:6px;"><div class="xp-bar-fill" style="width:${v}%;background:${s.color};"></div></div>
+    </div>`;
+            }).join('');
+            // SVG tree
+            const svg = document.getElementById('skill-svg');
+            if (!svg) return;
+            const branches = [
+                {
+                    name: 'SOFTWARE ENG', x: 150, color: '#3b82f6', nodes: [
+                        { label: 'Python', x: 150, y: 120, key: 'py' }, { label: 'DSA', x: 80, y: 220, key: 'dsa' }, { label: 'SQL', x: 220, y: 220, key: 'sql' },
+                        { label: 'Git', x: 80, y: 320, key: 'git' }, { label: 'APIs', x: 220, y: 320, key: 'apis' },
+                    ]
+                },
+                {
+                    name: 'FLUTTER', x: 380, color: '#06b6d4', nodes: [
+                        { label: 'Dart', x: 380, y: 120, key: 'dart' }, { label: 'Flutter', x: 310, y: 220, key: 'flutter' }, { label: 'Firebase', x: 450, y: 220, key: 'firebase' },
+                        { label: 'State Mgmt', x: 310, y: 320, key: 'state' }, { label: 'Projects', x: 450, y: 320, key: 'projects' },
+                    ]
+                },
+                {
+                    name: 'COMMUNICATION', x: 620, color: '#f59e0b', nodes: [
+                        { label: 'Speaking', x: 620, y: 120, key: 'speaking' }, { label: 'Grammar', x: 560, y: 220, key: 'grammar' },
+                        { label: 'Interview', x: 680, y: 220, key: 'interview_sk' },
+                    ]
+                },
+                {
+                    name: 'CREATOR', x: 820, color: '#a855f7', nodes: [
+                        { label: 'Content', x: 820, y: 120, key: 'content_sk' }, { label: 'Editing', x: 775, y: 220, key: 'editing' },
+                        { label: 'Branding', x: 860, y: 220, key: 'branding' },
+                    ]
+                },
+            ];
+            let svgHTML = '';
+            // Branch headers
+            branches.forEach(b => {
+                svgHTML += `<text x="${b.x}" y="60" text-anchor="middle" fill="${b.color}" font-size="11" font-family="'Orbitron',sans-serif" letter-spacing="2" opacity="0.8">${b.name}</text>`;
+                // Root node
+                svgHTML += `<circle cx="${b.x}" cy="80" r="5" fill="${b.color}" opacity="0.5"/>`;
+            });
+            // Lines and nodes
+            branches.forEach(b => {
+                b.nodes.forEach((n, i) => {
+                    const unlocked = STATE.skillNodes[n.key] && STATE.skillNodes[n.key] !== 'locked';
+                    const completed = STATE.skillNodes[n.key] === 'completed';
+                    const col = completed ? '#10b981' : (unlocked ? b.color : '#374151');
+                    const stroke = completed ? '#10b981' : (unlocked ? b.color : '#374151');
+                    const fillBg = completed ? 'rgba(16,185,129,0.2)' : (unlocked ? `rgba(0,50,80,0.6)` : '#0f172a');
+                    // Line from root or prev
+                    if (i === 0) {
+                        svgHTML += `<line x1="${b.x}" y1="85" x2="${n.x}" y2="${n.y - 20}" stroke="${stroke}" stroke-width="1" opacity="0.4"/>`;
+                    }
+                    svgHTML += `<g class="skill-node" onclick="toggleSkillNode('${n.key}','${b.color}')">
+        <circle cx="${n.x}" cy="${n.y}" r="26" fill="${fillBg}" stroke="${stroke}" stroke-width="1.5"/>
+        <text x="${n.x}" y="${n.y + 4}" text-anchor="middle" fill="${col}" font-size="9" font-family="'Rajdhani',sans-serif" font-weight="600">${n.label}</text>
+        ${completed ? `<text x="${n.x + 18}" y="${n.y - 18}" font-size="10">✓</text>` : ''}
+      </g>`;
+                });
+            });
+            svg.innerHTML = svgHTML;
+        }
+        function toggleSkillNode(key, color) {
+            const cur = STATE.skillNodes[key] || 'locked';
+            const next = cur === 'locked' ? 'unlocked' : (cur === 'unlocked' ? 'completed' : 'locked');
+            STATE.skillNodes[key] = next;
+            if (next === 'completed') {
+                addXP(50, 'Skill completed');
+                STATE.skills.python = Math.min(100, (STATE.skills.python || 0) + 3);
+            }
+            save();
+            renderSkillTree();
+        }
+
+        // ============================================================
+        // ROADMAP
+        // ============================================================
+        const ROADMAP_TASKS = [
+            ['Python Basics', 'Variables & Data Types'], ['Python Control Flow', 'Lists & Dicts'], ['Python Functions', 'OOP Intro'],
+            ['Python OOP', 'Build Calculator'], ['DSA Arrays', 'Two Pointer Problems'], ['DSA Strings', 'Sliding Window'],
+            ['DSA Linked Lists', 'Reverse & Detect Cycle'], ['DSA Stacks & Queues', 'Implement Both'], ['Comm Practice', 'Self Introduction'],
+            ['Python File I/O', 'Error Handling'], ['DSA Trees', 'BFS & DFS'], ['Flutter Setup', 'First App'],
+            ['Flutter Widgets', 'Stateful vs Stateless'], ['DSA Graphs', 'Adjacency List'], ['Python Decorators', 'Generators'],
+            ['Flutter Navigation', 'Multi-Screen App'], ['Comm Practice', 'Project Explanation'], ['SQL Basics', 'SELECT & JOIN'],
+            ['Python APIs', 'Requests Library'], ['Flutter State Mgmt', 'Provider Intro'], ['DSA Sorting', 'Merge & Quick Sort'],
+            ['Build: OnlyUs UI', 'Login & Home Screen'], ['DSA DP Intro', 'Fibonacci Memoization'], ['SQL Advanced', 'GROUP BY & HAVING'],
+            ['Comm Practice', 'HR Questions Round'], ['Flutter Firebase', 'Auth Integration'], ['Python Project', 'Portfolio Backend'],
+            ['DSA DP', 'Knapsack Problem'], ['Job Applications', 'Apply to 10 Companies'], ['Python OOP Advanced', 'Inheritance'],
+            ['Build: OnlyUs', 'User Profile Feature'], ['Flutter UI Polish', 'Animations'], ['DSA Graphs', 'Dijkstra Algorithm'],
+            ['Interview Prep', 'Python Mock Interview'], ['Comm Practice', 'Technical Explanation'], ['SQL Window Functions', 'ROW_NUMBER'],
+            ['Flutter State', 'Riverpod/BLoC Intro'], ['Build: OnlyUs', 'Feed Feature'], ['DSA Backtracking', 'N-Queens'],
+            ['Job Follow-ups', 'Cold Email 5 Companies'], ['Python Testing', 'Unit Tests Basics'], ['Comm Practice', 'Salary Negotiation'],
+            ['Flutter Advanced', 'Custom Animations'], ['DSA Tries', 'Word Search'], ['Build: OnlyUs', 'Messaging Feature'],
+            ['Interview Prep', 'Flutter Mock Interview'], ['Python Async', 'AsyncIO Basics'], ['DSA Segment Tree', 'Range Queries'],
+            ['Job Applications', 'LinkedIn Optimization'], ['Flutter Firebase', 'Realtime DB'], ['Build: OnlyUs', 'Beta Testing'],
+            ['Comm Practice', 'Confidence Building'], ['DSA Hard', 'LC Hard Problems x3'], ['Python ML Intro', 'NumPy & Pandas'],
+            ['Interview Prep', 'DSA Mock Interview'], ['Build: Redemption OS', 'Feature Polish'], ['Flutter Deploy', 'Android Build'],
+            ['Job Applications', 'Apply to 10 More'], ['DSA Review', 'All Topics Revision'], ['Comm Practice', 'Group Discussion'],
+            ['Python Project', 'Complete & Deploy'], ['Flutter Project', 'Complete & Deploy'], ['Interview Prep', 'Full Mock Interview'],
+            ['Build: OnlyUs', 'Launch Prep'], ['Job Hunt', 'Final Outreach Blitz'], ['Comm Practice', 'Final Confidence'],
+            ['Python Mastery', 'Advanced Concepts'], ['Flutter Mastery', 'Complex UI Build'], ['DSA Mastery', 'Hard Problems Set'],
+            ['Interview Mastery', '3 Mock Interviews'], ['Build: OnlyUs', 'Soft Launch Day'], ['Analytics Review', 'Track All Progress'],
+            ['Final Polish', 'All Projects Review'], ['Job Hunt Finale', 'Track All Applications'], ['REDEMPTION DAY', 'Reflect & Level Up'],
+        ];
+        function renderRoadmap() {
+            const grid = document.getElementById('roadmap-grid');
+            if (!grid) return;
+            const doneDays = (STATE.roadmapStatus || []).filter(s => s === 'completed').length;
+            document.getElementById('road-pct').textContent = Math.round((doneDays / 75) * 100) + '%';
+            document.getElementById('road-bar').style.width = Math.round((doneDays / 75) * 100) + '%';
+            document.getElementById('road-done').textContent = doneDays;
+            grid.innerHTML = Array(75).fill(0).map((_, i) => {
+                const status = (STATE.roadmapStatus || [])[i] || 'not-started';
+                const tasks = ROADMAP_TASKS[i] || ['Task ' + i];
+                const col = status === 'completed' ? 'var(--neon-green)' : status === 'in-progress' ? 'var(--neon-gold)' : 'var(--text-muted)';
+                const badge = status === 'completed' ? '✓ DONE' : status === 'in-progress' ? '▶ IN PROGRESS' : '○ PENDING';
+                const badgeBg = status === 'completed' ? 'rgba(16,185,129,0.2)' : status === 'in-progress' ? 'rgba(245,158,11,0.2)' : 'rgba(100,116,139,0.1)';
+                return `<div class="day-card ${status === 'completed' ? 'completed-day' : status === 'in-progress' ? 'in-progress' : ''}" onclick="cycleRoadmapDay(${i})">
+      <div class="day-num" style="color:${col};">DAY ${i + 1}</div>
+      ${tasks.map(t => `<div class="day-task">${t}</div>`).join('')}
+      <div class="day-status" style="background:${badgeBg};color:${col};">${badge}</div>
+    </div>`;
+            }).join('');
+        }
+        function cycleRoadmapDay(i) {
+            const cur = STATE.roadmapStatus[i] || 'not-started';
+            const next = cur === 'not-started' ? 'in-progress' : cur === 'in-progress' ? 'completed' : 'not-started';
+            STATE.roadmapStatus[i] = next;
+            if (next === 'completed') addXP(15, 'Day completed');
+            save();
+            renderRoadmap();
+        }
+
+        // ============================================================
+        // JOBS
+        // ============================================================
+        let jobChartInstance = null;
+        function openJobModal() { document.getElementById('job-modal').classList.add('open'); document.getElementById('j-date').value = new Date().toISOString().split('T')[0]; }
+        function saveJob() {
+            const company = document.getElementById('j-company').value.trim();
+            if (!company) return;
+            const job = {
+                id: Date.now(),
+                company,
+                role: document.getElementById('j-role').value,
+                date: document.getElementById('j-date').value,
+                status: document.getElementById('j-status').value,
+                notes: document.getElementById('j-notes').value,
+            };
+            STATE.jobs.push(job);
+            addXP(10, 'Job applied');
+            save();
+            closeModal('job-modal');
+            renderJobs();
+            renderJobChart();
+            checkAchievements();
+        }
+        function renderJobs() {
+            const list = document.getElementById('jobs-list');
+            if (!list) return;
+            const jobs = STATE.jobs || [];
+            document.getElementById('job-total').textContent = jobs.length;
+            document.getElementById('job-assess').textContent = jobs.filter(j => j.status === 'assessment').length;
+            document.getElementById('job-inter').textContent = jobs.filter(j => j.status === 'interview').length;
+            document.getElementById('job-sel').textContent = jobs.filter(j => j.status === 'selected').length;
+            if (jobs.length === 0) { list.innerHTML = '<div class="card" style="text-align:center;padding:40px;color:var(--text-muted);">No applications yet. Start hunting! 💼</div>'; return; }
+            list.innerHTML = jobs.slice().reverse().map(j => `
+    <div class="job-card">
+      <div>
+        <div class="job-company">${j.company}</div>
+        <div class="job-role">${j.role}</div>
+        <div class="job-date">${j.date}</div>
+        ${j.notes ? `<div style="font-size:11px;color:var(--text-muted);margin-top:4px;">${j.notes}</div>` : ''}
+      </div>
+      <div>
+        <div class="status-badge status-${j.status}">${j.status.toUpperCase()}</div>
+        <div style="display:flex;gap:6px;margin-top:8px;">
+          <select style="font-size:10px;padding:4px;background:rgba(0,212,255,0.05);border:1px solid rgba(0,212,255,0.2);border-radius:4px;color:var(--text-primary);cursor:pointer;" onchange="updateJobStatus(${j.id},this.value)">
+            <option>Change status</option>
+            <option value="applied">APPLIED</option><option value="assessment">ASSESSMENT</option>
+            <option value="interview">INTERVIEW</option><option value="rejected">REJECTED</option><option value="selected">SELECTED</option>
+          </select>
+          <button class="btn btn-red btn-sm" onclick="deleteJob(${j.id})">✕</button>
+        </div>
+      </div>
+    </div>`).join('');
+        }
+        function updateJobStatus(id, status) {
+            if (!status || status === 'Change status') return;
+            const j = STATE.jobs.find(j => j.id === id);
+            if (j) { j.status = status; save(); renderJobs(); checkAchievements(); }
+        }
+        function deleteJob(id) { STATE.jobs = STATE.jobs.filter(j => j.id !== id); save(); renderJobs(); renderJobChart(); }
+        function renderJobChart() {
+            const ctx = document.getElementById('job-chart');
+            if (!ctx) return;
+            if (jobChartInstance) { jobChartInstance.destroy(); jobChartInstance = null; }
+            const jobs = STATE.jobs || [];
+            jobChartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['Applied', 'Assessment', 'Interview', 'Rejected', 'Selected'],
+                    datasets: [{
+                        data: [
+                            jobs.filter(j => j.status === 'applied').length,
+                            jobs.filter(j => j.status === 'assessment').length,
+                            jobs.filter(j => j.status === 'interview').length,
+                            jobs.filter(j => j.status === 'rejected').length,
+                            jobs.filter(j => j.status === 'selected').length,
+                        ],
+                        backgroundColor: ['rgba(0,212,255,0.5)', 'rgba(168,85,247,0.5)', 'rgba(245,158,11,0.5)', 'rgba(239,68,68,0.5)', 'rgba(16,185,129,0.5)'],
+                        borderColor: ['#00d4ff', '#a855f7', '#f59e0b', '#ef4444', '#10b981'],
+                        borderWidth: 1, borderRadius: 4,
+                    }]
+                },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#64748b' } }, y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#64748b', stepSize: 1 } } } }
+            });
+        }
+
+        // ============================================================
+        // INTERVIEW PREP
+        // ============================================================
+        let mockTimerInterval = null;
+        let mockTimeLeft = 120;
+        let currentQCat = 'HR';
+        function renderQuestions(cat) {
+            currentQCat = cat;
+            document.querySelectorAll('#page-interview .tab').forEach(t => t.classList.remove('active'));
+            const list = document.getElementById('questions-list');
+            if (!list) return;
+            const qs = QUESTIONS[cat] || [];
+            list.innerHTML = qs.map((q, i) => `
+    <div class="q-card" id="qc-${cat}-${i}" onclick="toggleQ('${cat}',${i})">
+      <div class="q-cat">${cat} QUESTION</div>
+      <div class="q-text">${q.q}</div>
+      <div class="q-answer">${q.a}</div>
+    </div>`).join('');
+        }
+        function filterQuestions(cat, el) {
+            document.querySelectorAll('#page-interview .tabs .tab').forEach(t => t.classList.remove('active'));
+            if (el) el.classList.add('active');
+            renderQuestions(cat);
+        }
+        function toggleQ(cat, i) {
+            const el = document.getElementById(`qc-${cat}-${i}`);
+            if (el) el.classList.toggle('open');
+        }
+        function startMockInterview() {
+            document.getElementById('mock-area').style.display = 'block';
+            nextMockQuestion();
+        }
+        function nextMockQuestion() {
+            const allQ = Object.values(QUESTIONS).flat();
+            const q = allQ[Math.floor(Math.random() * allQ.length)];
+            document.getElementById('mock-question').textContent = q.q;
+            document.getElementById('mock-answer').value = '';
+            clearInterval(mockTimerInterval);
+            mockTimeLeft = 120;
+            updateMockTimer();
+            mockTimerInterval = setInterval(() => { mockTimeLeft--; if (mockTimeLeft <= 0) { clearInterval(mockTimerInterval); } updateMockTimer(); }, 1000);
+        }
+        function updateMockTimer() {
+            const m = Math.floor(mockTimeLeft / 60).toString().padStart(2, '0');
+            const s = (mockTimeLeft % 60).toString().padStart(2, '0');
+            const el = document.getElementById('mock-timer');
+            if (el) { el.textContent = `${m}:${s}`; el.style.color = mockTimeLeft <= 30 ? '#ef4444' : 'var(--neon-cyan)'; }
+        }
+        function stopMock() { clearInterval(mockTimerInterval); document.getElementById('mock-area').style.display = 'none'; }
+
+        // ============================================================
+        // PROJECTS
+        // ============================================================
+        function openProjectModal() { document.getElementById('project-modal').classList.add('open'); }
+        function saveProject() {
+            const name = document.getElementById('p-name').value.trim();
+            if (!name) return;
+            STATE.projects.push({
+                id: Date.now(), name,
+                desc: document.getElementById('p-desc').value,
+                progress: parseInt(document.getElementById('p-progress').value) || 0,
+                milestones: ['Planning', 'Development', 'Testing', 'Launch'],
+                milestoneDone: [false, false, false, false],
+            });
+            addXP(50, 'Project added');
+            save();
+            closeModal('project-modal');
+            renderProjects();
+            checkAchievements();
+        }
+        function renderProjects() {
+            const list = document.getElementById('projects-list');
+            if (!list) return;
+            const projects = STATE.projects || [];
+            if (projects.length === 0) { list.innerHTML = '<div class="card" style="text-align:center;padding:40px;color:var(--text-muted);">No projects yet. What are you building? 🚀</div>'; return; }
+            list.innerHTML = projects.map(p => `
+    <div class="project-card">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+        <div>
+          <div class="project-name">${p.name}</div>
+          <div class="project-desc">${p.desc || ''}</div>
+        </div>
+        <button class="btn btn-red btn-sm" onclick="deleteProject(${p.id})">✕</button>
+      </div>
+      <div class="xp-bar-wrap">
+        <div class="xp-bar-labels"><span>Progress</span><span style="color:var(--neon-purple);">${p.progress}%</span></div>
+        <div class="xp-bar" style="height:8px;"><div class="xp-bar-fill purple" style="width:${p.progress}%"></div></div>
+      </div>
+      <div style="margin-top:12px;">
+        <div class="card-label">MILESTONES</div>
+        ${(p.milestones || []).map((m, i) => `
+          <div class="milestone ${p.milestoneDone && p.milestoneDone[i] ? 'milestone-done' : 'milestone-pending'}" onclick="toggleMilestone(${p.id},${i})" style="cursor:pointer;">
+            <div class="milestone-dot"></div>
+            <span style="color:${p.milestoneDone && p.milestoneDone[i] ? 'var(--neon-green)' : 'var(--text-muted)'};">${m}</span>
+            ${p.milestoneDone && p.milestoneDone[i] ? '<span style="margin-left:auto;color:var(--neon-green);font-size:12px;">✓</span>' : ''}
+          </div>`).join('')}
+      </div>
+      <div style="margin-top:12px;display:flex;gap:8px;align-items:center;">
+        <input type="range" min="0" max="100" value="${p.progress}" style="flex:1;accent-color:var(--neon-purple);" onchange="updateProjectProgress(${p.id},this.value)"/>
+        <span style="font-family:'Orbitron',sans-serif;font-size:12px;color:var(--neon-purple);" id="pp-${p.id}">${p.progress}%</span>
+      </div>
+    </div>`).join('');
+        }
+        function toggleMilestone(pid, i) {
+            const p = STATE.projects.find(p => p.id === pid);
+            if (!p) return;
+            if (!p.milestoneDone) p.milestoneDone = [];
+            p.milestoneDone[i] = !p.milestoneDone[i];
+            if (p.milestoneDone[i]) addXP(20, 'Milestone completed');
+            save(); renderProjects();
+        }
+        function updateProjectProgress(pid, val) {
+            const p = STATE.projects.find(p => p.id === pid);
+            if (p) { p.progress = parseInt(val); save(); const el = document.getElementById(`pp-${pid}`); if (el) el.textContent = val + '%'; STATE.skills.projects = Math.max(STATE.skills.projects || 0, Math.round(val)); }
+        }
+        function deleteProject(id) { STATE.projects = STATE.projects.filter(p => p.id !== id); save(); renderProjects(); }
+
+        // ============================================================
+        // MONEY
+        // ============================================================
+        let moneyChartInst = null, moneyPieInst = null;
+        function openMoneyModal() { document.getElementById('money-modal').classList.add('open'); }
+        function saveMoney() {
+            const amount = parseFloat(document.getElementById('m-amount').value) || 0;
+            if (!amount) return;
+            STATE.money.push({
+                id: Date.now(),
+                type: document.getElementById('m-type').value,
+                cat: document.getElementById('m-cat').value,
+                amount,
+                note: document.getElementById('m-note').value,
+                date: new Date().toLocaleDateString(),
+            });
+            if (document.getElementById('m-type').value === 'income') addXP(5, 'Income logged');
+            save();
+            closeModal('money-modal');
+            renderMoney();
+            renderMoneyCharts();
+            checkAchievements();
+        }
+        function renderMoney() {
+            const list = document.getElementById('money-list');
+            if (!list) return;
+            const entries = STATE.money || [];
+            const income = entries.filter(m => m.type === 'income').reduce((a, m) => a + m.amount, 0);
+            const expense = entries.filter(m => m.type === 'expense').reduce((a, m) => a + m.amount, 0);
+            document.getElementById('money-income').textContent = '₹' + income.toLocaleString();
+            document.getElementById('money-expense').textContent = '₹' + expense.toLocaleString();
+            document.getElementById('money-savings').textContent = '₹' + (income - expense).toLocaleString();
+            if (entries.length === 0) { list.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-muted);">No entries yet.</div>'; return; }
+            list.innerHTML = entries.slice().reverse().map(m => `
+    <div class="money-row">
+      <div><div class="money-label">${m.note || m.cat}</div><div style="font-size:10px;color:var(--text-muted);">${m.cat} · ${m.date}</div></div>
+      <div class="${m.type === 'income' ? 'money-income' : 'money-expense'} money-amount">${m.type === 'income' ? '+' : '-'}₹${m.amount.toLocaleString()}</div>
+    </div>`).join('');
+        }
+        function renderMoneyCharts() {
+            const ctx1 = document.getElementById('money-chart');
+            const ctx2 = document.getElementById('money-pie-chart');
+            if (!ctx1 || !ctx2) return;
+            if (moneyChartInst) moneyChartInst.destroy();
+            if (moneyPieInst) moneyPieInst.destroy();
+            const entries = STATE.money || [];
+            const income = entries.filter(m => m.type === 'income').reduce((a, m) => a + m.amount, 0);
+            const expense = entries.filter(m => m.type === 'expense').reduce((a, m) => a + m.amount, 0);
+            moneyChartInst = new Chart(ctx1, { type: 'bar', data: { labels: ['Income', 'Expenses', 'Savings'], datasets: [{ data: [income, expense, Math.max(0, income - expense)], backgroundColor: ['rgba(16,185,129,0.5)', 'rgba(239,68,68,0.5)', 'rgba(245,158,11,0.5)'], borderColor: ['#10b981', '#ef4444', '#f59e0b'], borderWidth: 1, borderRadius: 4 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#64748b' } }, y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#64748b' } } } } });
+            const cats = ['Freelance', 'YouTube', 'Agency', 'Salary'];
+            const catAmts = cats.map(c => entries.filter(m => m.cat === c && m.type === 'income').reduce((a, m) => a + m.amount, 0));
+            moneyPieInst = new Chart(ctx2, { type: 'doughnut', data: { labels: cats, datasets: [{ data: catAmts, backgroundColor: ['rgba(0,212,255,0.7)', 'rgba(245,158,11,0.7)', 'rgba(168,85,247,0.7)', 'rgba(16,185,129,0.7)'], borderColor: 'rgba(0,0,0,0.2)', borderWidth: 2 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { labels: { color: '#64748b', font: { size: 10 } } } } } });
+        }
+
+        // ============================================================
+        // COMMUNICATION TRAINER
+        // ============================================================
+        let commRating = 0;
+        function renderCommHistory() {
+            const hist = document.getElementById('comm-history');
+            if (!hist) return;
+            const ch = document.getElementById('comm-challenge-text');
+            if (ch) ch.textContent = STATE.currentChallenge || COMM_CHALLENGES[0];
+            const history = STATE.commHistory || [];
+            if (history.length === 0) { hist.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-muted);">No practice sessions yet.</div>'; return; }
+            hist.innerHTML = history.slice().reverse().slice(0, 10).map(h => `
+    <div style="padding:12px;border-bottom:1px solid rgba(0,212,255,0.08);">
+      <div style="font-size:12px;font-weight:600;color:var(--text-bright);">${h.challenge}</div>
+      <div style="color:var(--neon-gold);font-size:12px;margin-top:4px;">${'★'.repeat(h.rating)}${'☆'.repeat(5 - h.rating)}</div>
+      ${h.notes ? `<div style="font-size:11px;color:var(--text-muted);margin-top:4px;">${h.notes}</div>` : ''}
+      <div style="font-size:10px;color:var(--text-muted);margin-top:4px;">${h.date}</div>
+    </div>`).join('');
+        }
+        function newChallenge() {
+            const ch = COMM_CHALLENGES[Math.floor(Math.random() * COMM_CHALLENGES.length)];
+            STATE.currentChallenge = ch;
+            save();
+            document.getElementById('comm-challenge-text').textContent = ch;
+            commRating = 0;
+            document.querySelectorAll('.star').forEach(s => s.classList.remove('active'));
+        }
+        function rateSpeech(r) {
+            commRating = r;
+            document.querySelectorAll('.star').forEach((s, i) => s.classList.toggle('active', i < r));
+        }
+        function saveCommPractice() {
+            if (!commRating) return alert('Please rate your performance!');
+            STATE.commHistory = STATE.commHistory || [];
+            STATE.commHistory.push({ challenge: STATE.currentChallenge, rating: commRating, notes: document.getElementById('comm-notes').value, date: new Date().toLocaleDateString() });
+            STATE.skills.communication = Math.min(100, (STATE.skills.communication || 0) + 5);
+            addXP(20 + commRating * 5, 'Communication practice');
+            save();
+            document.getElementById('comm-notes').value = '';
+            commRating = 0;
+            document.querySelectorAll('.star').forEach(s => s.classList.remove('active'));
+            newChallenge();
+            renderCommHistory();
+        }
+
+        // ============================================================
+        // CONTENT HUB
+        // ============================================================
+        function openContentModal() { document.getElementById('content-modal').classList.add('open'); }
+        function saveContent() {
+            const title = document.getElementById('cnt-title').value.trim();
+            if (!title) return;
+            STATE.content = STATE.content || [];
+            STATE.content.push({
+                id: Date.now(),
+                platform: document.getElementById('cnt-platform').value,
+                title, views: parseInt(document.getElementById('cnt-views').value) || 0,
+                date: new Date().toLocaleDateString(),
+            });
+            addXP(15, 'Content created');
+            save();
+            closeModal('content-modal');
+            renderContent();
+        }
+        function renderContent() {
+            const items = document.getElementById('content-items');
+            if (!items) return;
+            const content = STATE.content || [];
+            const igPosts = content.filter(c => c.platform === 'Instagram Post').length;
+            const reels = content.filter(c => c.platform === 'Reel').length;
+            const yt = content.filter(c => c.platform === 'YouTube Video').length;
+            const totalViews = content.reduce((a, c) => a + c.views, 0);
+            document.getElementById('cnt-ig').textContent = igPosts;
+            document.getElementById('cnt-reels').textContent = reels;
+            document.getElementById('cnt-yt').textContent = yt;
+            document.getElementById('cnt-followers').textContent = totalViews.toLocaleString();
+            if (content.length === 0) { items.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-muted);">No content logged yet.</div>'; return; }
+            items.innerHTML = content.slice().reverse().map(c => `
+    <div class="content-card">
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <div>
+          <div style="font-size:12px;color:var(--neon-gold);letter-spacing:2px;">${c.platform}</div>
+          <div style="font-size:14px;font-weight:600;color:var(--text-bright);margin-top:4px;">${c.title}</div>
+          <div style="font-size:10px;color:var(--text-muted);margin-top:2px;">${c.date}</div>
+        </div>
+        <div style="text-align:right;">
+          <div style="font-family:'Orbitron',sans-serif;font-size:16px;color:var(--neon-cyan);">${c.views.toLocaleString()}</div>
+          <div style="font-size:9px;color:var(--text-muted);">views</div>
+        </div>
+      </div>
+    </div>`).join('');
+        }
+
+        // ============================================================
+        // ANALYTICS
+        // ============================================================
+        let analyticsCharts = {};
+        function renderAnalytics() {
+            ['xp-chart', 'cat-chart', 'radar-chart', 'funnel-chart'].forEach(id => {
+                if (analyticsCharts[id]) { analyticsCharts[id].destroy(); delete analyticsCharts[id]; }
+            });
+            // XP per day
+            const ctx1 = document.getElementById('xp-chart');
+            if (ctx1) {
+                const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+                analyticsCharts['xp-chart'] = new Chart(ctx1, { type: 'line', data: { labels: days, datasets: [{ label: 'XP', data: STATE.xpHistory || Array(7).fill(0), borderColor: '#00d4ff', backgroundColor: 'rgba(0,212,255,0.1)', fill: true, tension: 0.4, pointBackgroundColor: '#00d4ff' }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#64748b' } }, y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#64748b' } } } } });
+            }
+            // Cat chart
+            const ctx2 = document.getElementById('cat-chart');
+            if (ctx2) {
+                const cats = ['PHYSICAL', 'LEARNING', 'COMMUNICATION', 'JOB', 'BUILDING'];
+                const counts = cats.map(c => (STATE.quests || []).filter(q => q.category === c && q.done).length);
+                analyticsCharts['cat-chart'] = new Chart(ctx2, { type: 'bar', data: { labels: cats, datasets: [{ data: counts, backgroundColor: ['rgba(239,68,68,0.5)', 'rgba(0,212,255,0.5)', 'rgba(168,85,247,0.5)', 'rgba(245,158,11,0.5)', 'rgba(16,185,129,0.5)'], borderColor: ['#ef4444', '#00d4ff', '#a855f7', '#f59e0b', '#10b981'], borderWidth: 1, borderRadius: 4 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#64748b', font: { size: 9 } } }, y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#64748b', stepSize: 1 } } } } });
+            }
+            // Radar
+            const ctx3 = document.getElementById('radar-chart');
+            if (ctx3) {
+                const sk = STATE.skills || {};
+                analyticsCharts['radar-chart'] = new Chart(ctx3, { type: 'radar', data: { labels: ['Python', 'Flutter', 'DSA', 'Communication', 'Projects', 'Interview'], datasets: [{ data: [sk.python || 0, sk.flutter || 0, sk.dsa || 0, sk.communication || 0, sk.projects || 0, sk.interview || 0], borderColor: '#a855f7', backgroundColor: 'rgba(168,85,247,0.15)', pointBackgroundColor: '#a855f7' }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { r: { grid: { color: 'rgba(255,255,255,0.1)' }, ticks: { display: false }, pointLabels: { color: '#64748b', font: { size: 10 } }, min: 0, max: 100 } } } });
+            }
+            // Funnel
+            const ctx4 = document.getElementById('funnel-chart');
+            if (ctx4) {
+                const jobs = STATE.jobs || [];
+                analyticsCharts['funnel-chart'] = new Chart(ctx4, { type: 'bar', data: { labels: ['Applied', 'Assessment', 'Interview', 'Selected'], datasets: [{ data: [jobs.length, jobs.filter(j => j.status === 'assessment').length, jobs.filter(j => j.status === 'interview').length, jobs.filter(j => j.status === 'selected').length], backgroundColor: ['rgba(0,212,255,0.5)', 'rgba(168,85,247,0.5)', 'rgba(245,158,11,0.5)', 'rgba(16,185,129,0.5)'], borderColor: ['#00d4ff', '#a855f7', '#f59e0b', '#10b981'], borderWidth: 1, borderRadius: 4 }] }, options: { responsive: true, maintainAspectRatio: false, indexAxis: 'y', plugins: { legend: { display: false } }, scales: { x: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#64748b', stepSize: 1 } }, y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#64748b' } } } } });
+            }
+        }
+
+        // ============================================================
+        // ACHIEVEMENTS
+        // ============================================================
+        function checkAchievements() {
+            ALL_ACHIEVEMENTS.forEach(a => {
+                if (!STATE.unlockedAchievements.includes(a.id)) {
+                    try { if (a.condition(STATE)) { STATE.unlockedAchievements.push(a.id); showAchievement(a); save(); } } catch (e) { }
+                }
+            });
+        }
+        function showAchievement(a) {
+            const popup = document.getElementById('achievement-popup');
+            document.getElementById('ach-popup-name').textContent = a.name;
+            document.getElementById('ach-popup-desc').textContent = a.desc;
+            popup.classList.add('show');
+            setTimeout(() => popup.classList.remove('show'), 3500);
+        }
+        function renderAchievements() {
+            const grid = document.getElementById('achievements-grid');
+            if (!grid) return;
+            const unlocked = STATE.unlockedAchievements || [];
+            document.getElementById('ach-unlocked-count').textContent = `${unlocked.length}/${ALL_ACHIEVEMENTS.length} UNLOCKED`;
+            grid.innerHTML = ALL_ACHIEVEMENTS.map(a => `
+    <div class="achievement-card ${unlocked.includes(a.id) ? 'unlocked' : 'locked'}">
+      <div class="ach-icon">${a.icon}</div>
+      <div class="ach-card-name">${a.name}</div>
+      <div class="ach-card-desc">${a.desc}</div>
+      ${a.xp ? `<div class="ach-card-xp">AT ${a.xp} XP</div>` : ''}
+      ${unlocked.includes(a.id) ? '<div style="color:var(--neon-green);font-size:10px;margin-top:6px;letter-spacing:2px;">✓ UNLOCKED</div>' : ''}
+    </div>`).join('');
+        }
+
+        // ============================================================
+        // LEADERBOARD
+        // ============================================================
+        let monthlyChartInst = null;
+        function renderLeaderboard() {
+            const lb = STATE.monthlyXP || {};
+            document.getElementById('lb-cur-rank').textContent = lb.currentRank || STATE.rank;
+            document.getElementById('lb-cur-xp').textContent = (lb.current || STATE.totalXP) + ' XP';
+            document.getElementById('lb-prev-rank').textContent = lb.prevRank || '—';
+            document.getElementById('lb-prev-xp').textContent = (lb.previous || 0) + ' XP';
+            const cur = lb.current || STATE.totalXP, prev = lb.previous || 0;
+            const growth = prev > 0 ? Math.round(((cur - prev) / prev) * 100) : 100;
+            document.getElementById('lb-growth').textContent = (growth >= 0 ? '+' : '') + growth + '%';
+            document.getElementById('lb-growth').style.color = growth >= 0 ? 'var(--neon-green)' : '#ef4444';
+            const ctx = document.getElementById('monthly-chart');
+            if (!ctx) return;
+            if (monthlyChartInst) monthlyChartInst.destroy();
+            monthlyChartInst = new Chart(ctx, { type: 'bar', data: { labels: ['Last Month', 'This Month'], datasets: [{ data: [prev, cur], backgroundColor: ['rgba(168,85,247,0.5)', 'rgba(0,212,255,0.5)'], borderColor: ['#a855f7', '#00d4ff'], borderWidth: 1, borderRadius: 4 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#64748b' } }, y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#64748b' } } } } });
+        }
+
+        // ============================================================
+        // AI MENTOR
+        // ============================================================
+        const AI_RESPONSES = {
+            today: () => {
+                const sk = STATE.skills || {};
+                const lowest = Object.entries(sk).sort((a, b) => a[1] - b[1])[0];
+                const lowestName = { python: 'Python', flutter: 'Flutter', dsa: 'DSA', communication: 'Communication', projects: 'Projects', interview: 'Interview Prep' }[lowest ? lowest[0] : 'python'] || 'Python';
+                return `Based on your current stats, your ${lowestName} skill is at ${lowest ? lowest[1] : 0}% — that's your weakest link. Here's your battle plan:\n\n🎯 TODAY'S PRIORITY:\n• ${lowestName} — 2-3 hours focused study\n• Complete at least 3 Daily Quests\n• Apply to 2-3 jobs if you haven't today\n• 30 minutes communication practice\n\nYou're at ${STATE.totalXP} XP total. Push hard and you'll hit the next rank! 💪`;
+            },
+            progress: () => `Current Status Analysis:\n\n⚡ XP: ${STATE.totalXP} total\n🎖️ Rank: ${STATE.rank} → Next: push to ${getRankInfo(STATE.totalXP).nextRankName}\n🔥 Streak: ${STATE.streak} days\n\nSkill Breakdown:\n• Python: ${STATE.skills.python || 0}%\n• Flutter: ${STATE.skills.flutter || 0}%\n• DSA: ${STATE.skills.dsa || 0}%\n• Communication: ${STATE.skills.communication || 0}%\n\nRoadmap: ${(STATE.roadmapStatus || []).filter(s => s === 'completed').length}/75 days completed.\n\nAssessment: ${STATE.streak > 7 ? '🔥 Great consistency!' : STATE.streak > 2 ? '📈 Good momentum!' : '⚠️ Build your streak!'} Keep grinding — you're writing your redemption arc.`,
+            interview: () => `INTERVIEW BATTLE TIPS:\n\n🎯 Technical:\n• STAR method for behavioral questions\n• Think out loud in coding interviews\n• Time/Space complexity for every solution\n• Practice whiteboarding even at home\n\n💬 Communication:\n• 2-minute self introduction\n• Ask 3 smart questions at the end\n• Research the company deeply\n\n🧠 DSA Focus Areas:\n• Arrays, Strings, Hash Maps\n• Binary Search, Two Pointers\n• Trees, Graphs (BFS/DFS)\n• Dynamic Programming basics\n\nYou have ${(STATE.quests || []).filter(q => q.category === 'JOB' && q.done).length} job quests completed. Keep that energy! 🚀`,
+            jobs: () => `JOB HUNT INTELLIGENCE:\n\n📊 Your Pipeline:\n• Total Applications: ${STATE.jobs.length}\n• Interviews: ${(STATE.jobs || []).filter(j => j.status === 'interview').length}\n\n🎯 Strategy:\n• Aim for 10 applications per week minimum\n• Follow up after 5-7 days\n• Optimize LinkedIn for visibility\n• Build GitHub with your projects (OnlyUs, Redemption OS)\n• LeetCode — at least 2 problems/day\n\n🔥 Power Moves:\n• Cold email to team leads directly\n• Contribute to open source\n• Build your personal brand on LinkedIn\n• Share your journey — makes you memorable`,
+            python: () => `PYTHON MASTERY ROADMAP:\n\n📍 Current: ${STATE.skills.python || 0}%\n\nPhase 1 — Core (0-40%):\n• Variables, data types, control flow\n• Functions, OOP, modules\n• List comprehensions, generators\n\nPhase 2 — Intermediate (40-70%):\n• Decorators, context managers\n• File I/O, error handling\n• APIs with requests library\n• Testing with pytest\n\nPhase 3 — Advanced (70-100%):\n• AsyncIO, multithreading\n• Data structures & algorithms\n• System design concepts\n• ML basics with NumPy/Pandas\n\nRecommended: 2 hours/day. Track your learning quests. You've got this! 💎`,
+        };
+        function renderAI() {
+            const chat = document.getElementById('ai-chat');
+            if (!chat) return;
+            if ((STATE.aiMessages || []).length === 0) {
+                chat.innerHTML = `<div class="ai-msg bot"><div class="ai-label bot-l">// AI MENTOR ONLINE</div>Hello, Operator. I've analyzed your data. You're at ${STATE.totalXP} XP — Rank ${STATE.rank}. Ask me anything about your learning path, career strategy, or today's priorities. I'm your personal intelligence advisor. 🤖</div>`;
+            } else {
+                chat.innerHTML = STATE.aiMessages.map(m => `<div class="ai-msg ${m.role}"><div class="ai-label ${m.role === 'user' ? 'user-l' : 'bot-l'}">${m.role === 'user' ? '// YOU' : '// AI MENTOR'}</div>${m.content.replace(/\n/g, '<br/>')}</div>`).join('');
+            }
+            chat.scrollTop = chat.scrollHeight;
+        }
+        function aiQuery(key) {
+            const response = AI_RESPONSES[key] ? AI_RESPONSES[key]() : "I'm analyzing your data...";
+            STATE.aiMessages = STATE.aiMessages || [];
+            const labels = { today: 'What to learn today?', progress: 'Analyze my progress', interview: 'Interview tips', jobs: 'Job hunt strategy', python: 'Python roadmap' };
+            STATE.aiMessages.push({ role: 'user', content: labels[key] || key });
+            STATE.aiMessages.push({ role: 'bot', content: response });
+            save();
+            renderAI();
+        }
+        function sendAiMsg() {
+            const inp = document.getElementById('ai-input');
+            const msg = inp.value.trim();
+            if (!msg) return;
+            inp.value = '';
+            STATE.aiMessages = STATE.aiMessages || [];
+            STATE.aiMessages.push({ role: 'user', content: msg });
+            // Simple intent matching
+            const lower = msg.toLowerCase();
+            let response = '';
+            if (lower.includes('python')) response = AI_RESPONSES.python();
+            else if (lower.includes('interview')) response = AI_RESPONSES.interview();
+            else if (lower.includes('job')) response = AI_RESPONSES.jobs();
+            else if (lower.includes('today') || lower.includes('learn')) response = AI_RESPONSES.today();
+            else if (lower.includes('progress') || lower.includes('status')) response = AI_RESPONSES.progress();
+            else if (lower.includes('xp') || lower.includes('rank')) response = `You're at ${STATE.totalXP} XP — Rank ${STATE.rank}, Level ${STATE.level}. ${STATE.totalXP < 1000 ? 'You need ' + (1000 - STATE.totalXP) + ' XP to reach E Rank.' : state.totalXP < 6000 ? 'Keep pushing towards A Rank!' : 'You\'re elite. Keep climbing!'} 💎`;
+            else if (lower.includes('streak')) response = `Your current streak is ${STATE.streak} days. Your longest streak is ${STATE.longestStreak} days. ${STATE.streak === 0 ? 'Start today to build momentum!' : STATE.streak < 7 ? 'Build to 7 days for the Week Warrior achievement!' : 'Incredible consistency! Keep going!'}`;
+            else if (lower.includes('flutter') || lower.includes('dart')) response = `Flutter/Dart is at ${STATE.skills.flutter || 0}%. Focus on: Widget tree, StatefulWidget, Provider state management, Firebase integration. Build your OnlyUs app features daily!`;
+            else if (lower.includes('dsa')) response = `DSA Progress: ${STATE.skills.dsa || 0}%. Priority topics: Arrays, Linked Lists, Trees, Graphs, Dynamic Programming. Practice 2 LeetCode problems daily. Focus on medium difficulty.`;
+            else response = `Analyzing your query... Based on your profile (${STATE.totalXP} XP, ${STATE.rank} Rank, ${STATE.streak} day streak), I recommend staying consistent with your daily quests. Every day you show up counts. You're writing your redemption arc. 🔥`;
+            STATE.aiMessages.push({ role: 'bot', content: response });
+            save();
+            renderAI();
+        }
+
+        // ============================================================
+        // RANK UP POPUP
+        // ============================================================
+        function showRankUp(rank) {
+            const popup = document.getElementById('rank-popup');
+            document.getElementById('rank-popup-new').textContent = rank + ' RANK';
+            popup.classList.add('show');
+            setTimeout(() => popup.classList.remove('show'), 3000);
+        }
+
+        // ============================================================
+        // INIT
+        // ============================================================
+        updateStreak();
+        updateAllUI();
+        checkAchievements();
+
+        // Render landing first
+        setTimeout(() => {
+            const fill = document.getElementById('land-xp-fill');
+            const info = getRankInfo(STATE.totalXP);
+            if (fill) fill.style.width = info.pct + '%';
+        }, 500);
+
+        // Close modals on overlay click
+        document.querySelectorAll('.modal-overlay').forEach(m => {
+            m.addEventListener('click', e => { if (e.target === m) m.classList.remove('open'); });
+        });
+
+        // Keyboard shortcuts
+        document.addEventListener('keydown', e => {
+            if (e.key === 'Escape') document.querySelectorAll('.modal-overlay').forEach(m => m.classList.remove('open'));
+        });
+
+        console.log('%c REDEMPTION ARC OS INITIALIZED ', 'background:linear-gradient(90deg,#00d4ff,#a855f7);color:white;font-weight:bold;font-size:14px;padding:8px 16px;');
+    </script>
+</body>
+
+</html>
